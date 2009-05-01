@@ -42,7 +42,9 @@ public class APIBrowser extends ListActivity {
     	
     	methods.clear();
     	for (Method m:current.getClass().getMethods()){
-    		if (m.getParameterTypes().length == 0 && (m.getModifiers()&Modifier.STATIC)==0)
+    		if (m.getParameterTypes().length == 0 
+    				&& (m.getModifiers()&Modifier.STATIC)==0
+    				&& !m.getReturnType().equals(Void.TYPE))
     			methods.add(m);
     	}
     	((Adapter)getListAdapter()).notifyDataSetInvalidated();
