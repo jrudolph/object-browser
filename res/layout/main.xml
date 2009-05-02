@@ -15,13 +15,16 @@
 	        android:layout_height="wrap_content"
 	        android:text="You should not see this"
 	        android:textStyle="bold"
-	        android:textAppearance="?android:attr/textAppearanceMedium"
+	        android:textAppearance="?android:attr/textAppearanceMediumInverse"
+	        android:background="#ffffff"
 	    />
 	    <TextView
 	    	android:id="@+id/clazz"
 	    	android:layout_width="fill_parent" 
 	        android:layout_height="wrap_content"
 	        android:text="You should not see this"
+	        android:textAppearance="?android:attr/textAppearanceMediumInverse"
+	        android:background="#ffffff"
 	    />
 	</LinearLayout>
     <ListView 

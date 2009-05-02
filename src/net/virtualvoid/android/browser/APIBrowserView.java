@@ -1,5 +1,7 @@
 package net.virtualvoid.android.browser;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -17,7 +19,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class APIBrowserView extends ListActivity {
-	private Object current;
 	private LayoutInflater inflater;
 
 	private APIBrowser getApp(){
@@ -36,29 +37,100 @@ public class APIBrowserView extends ListActivity {
 
         setObject(getApp().getCurrent());
     }
-    private ArrayList<Method> methods = new ArrayList<Method>();
+    private ArrayList<Item> subItems = new ArrayList<Item>();
     private final static String TAG = "APIBrowser";
 
-    private void setObject(Object o){
-    	this.current = o;
-    	Log.d(TAG,"setObject called with "+o.toString());
+    private ArrayList<Item> fieldsOf(final Object o){
+        ArrayList<Item> res = new ArrayList<Item>();
+
+        Class<?> cur = o.getClass();
+
+        while(cur != null){
+            for (final Field f:cur.getDeclaredFields())
+                if (!isStatic(f))
+                    res.add(new Item(){
+                        {
+                            f.setAccessible(true);
+                        }
+                        @Override
+                        public Object get(){
+                            try {
+                                return f.get(o);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        @Override
+                        public String getName() {
+                            return f.getName();
+                        }
+                        @Override
+                        public Class<?> getReturnType() {
+                            return f.getType();
+                        }
+                    });
+            cur = cur.getSuperclass();
+        }
+
+        return res;
+    }
+    private boolean isProperty(Method m){
+        return !isStatic(m) // not static
+                && m.getName().startsWith("get")
+                && m.getParameterTypes().length == 0;
+    }
+    private boolean isStatic(Member m){
+        return (m.getModifiers()&Modifier.STATIC) != 0;
+    }
+    private ArrayList<Item> propertiesOf(final Object o){
+        ArrayList<Item> res = new ArrayList<Item>();
+
+        for (final Method m:o.getClass().getMethods())
+            if (isProperty(m))
+                res.add(new Item(){
+                    {
+                        m.setAccessible(true);
+                    }
+                    @Override
+                    public Object get(){
+                        try {
+                            return m.invoke(o);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    @Override
+                    public String getName() {
+                        return m.getName();
+                    }
+                    @Override
+                    public Class<?> getReturnType() {
+                        return m.getReturnType();
+                    }
+                });
+
+        return res;
+    }
+
+    private void setObject(Object current){
+        Log.d(TAG,"setObject called with "+current);
+
+        if (current == null)
+            return;
 
     	((TextView)findViewById(R.id.object)).setText(current.toString());
     	((TextView)findViewById(R.id.clazz)).setText(current.getClass().getName());
 
-    	methods.clear();
-    	for (Method m:current.getClass().getMethods()){
-    		if (m.getParameterTypes().length == 0
-    				&& (m.getModifiers()&Modifier.STATIC)==0
-    				&& !m.getReturnType().equals(Void.TYPE))
-    			methods.add(m);
-    	}
+    	subItems.clear();
+    	subItems.addAll(fieldsOf(current));
+    	subItems.addAll(propertiesOf(current));
+
     	((Adapter)getListAdapter()).notifyDataSetInvalidated();
     }
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-    	setObject(getApp().call(current, methods.get(position)));
+    	setObject(getApp().move(subItems.get(position)));
     }
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -73,25 +145,26 @@ public class APIBrowserView extends ListActivity {
 	class Adapter extends BaseAdapter{
 		@Override
 		public int getCount() {
-			return methods.size();
+			return subItems.size();
 		}
 		@Override
 		public Object getItem(int position) {
-			return methods.get(position);
+			return subItems.get(position);
 		}
 		@Override
 		public long getItemId(int position) {
-			return methods.get(position).hashCode();
+			return subItems.get(position).hashCode();
 		}
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			if (convertView == null)
-				convertView = inflater.inflate(R.layout.method, null);
+				convertView = inflater.inflate(R.layout.item, null);
 
-			Method m = methods.get(position);
+			Item m = subItems.get(position);
 
 			((TextView) convertView.findViewById(R.id.name)).setText(m.getName());
 			((TextView) convertView.findViewById(R.id.result_type)).setText(m.getReturnType().getName());
+			((TextView) convertView.findViewById(R.id.value)).setText(String.valueOf(m.get()));
 
 			return convertView;
 		}

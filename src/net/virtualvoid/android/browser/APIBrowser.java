@@ -1,6 +1,5 @@
 package net.virtualvoid.android.browser;
 
-import java.lang.reflect.Method;
 import java.util.LinkedList;
 
 import android.app.Application;
@@ -31,13 +30,13 @@ public class APIBrowser extends Application{
 
         return o;
     }
-    Object call(Object o,Method m){
+    Object move(Item i){
         try {
-            return switchTo(m.invoke(o));
+            return switchTo(i.get());
         } catch (Exception e) {
             // FAIL more noisily
             e.printStackTrace();
-            return o;
+            return getCurrent();
         }
     }
 }
