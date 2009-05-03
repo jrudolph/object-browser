@@ -7,7 +7,7 @@
 >
 	<LinearLayout
 	  xmlns:android="http://schemas.android.com/apk/res/android"
-	  android:layout_width="200px"
+	  android:layout_width="170px"
 	  android:layout_height="wrap_content"
 	  android:orientation="vertical"
 	>
@@ -23,10 +23,17 @@
 	  	android:layout_height="wrap_content"
 	  />
 	</LinearLayout>
+	
 	<TextView
 		android:id="@+id/value"
 	  	android:layout_width="wrap_content"
 	  	android:layout_height="wrap_content"
 	  	android:textAppearance="?android:attr/textAppearanceMedium"
+	/>
+	<ImageView
+		android:id="@+id/valueDrawable"
+		android:layout_width="wrap_content"
+	  	android:layout_height="wrap_content"
+	  	android:adjustViewBounds="true"
 	/>
 </LinearLayout>

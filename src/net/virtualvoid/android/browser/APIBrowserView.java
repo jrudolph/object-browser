@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 import android.app.ListActivity;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -15,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -155,6 +157,9 @@ public class APIBrowserView extends ListActivity {
 		public long getItemId(int position) {
 			return subItems.get(position).hashCode();
 		}
+		private int visibility(boolean visible){
+		    return visible ? View.VISIBLE : View.GONE;
+		}
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			if (convertView == null)
@@ -164,7 +169,17 @@ public class APIBrowserView extends ListActivity {
 
 			((TextView) convertView.findViewById(R.id.name)).setText(m.getName());
 			((TextView) convertView.findViewById(R.id.result_type)).setText(m.getReturnType().getName());
-			((TextView) convertView.findViewById(R.id.value)).setText(String.valueOf(m.get()));
+	         TextView textView = (TextView) convertView.findViewById(R.id.value);
+	         ImageView imageView = (ImageView) convertView.findViewById(R.id.valueDrawable);
+
+			Object value = m.get();
+            if (value instanceof Drawable)
+                imageView.setImageDrawable((Drawable) value);
+            else
+                textView.setText(String.valueOf(value));
+
+            textView.setVisibility(visibility(!(value instanceof Drawable)));
+            imageView.setVisibility(visibility(value instanceof Drawable));
 
 			return convertView;
 		}
