@@ -165,12 +165,12 @@ public class APIBrowserView extends ListActivity {
     }
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK){
+        if (keyCode == KeyEvent.KEYCODE_BACK && getApp().hasPrevious()){
             setObject(getApp().toPrevious());
             return true;
         }
         else
-            return false;
+            return super.onKeyDown(keyCode, event);
     }
 
 	class Adapter extends BaseAdapter{

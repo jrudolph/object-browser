@@ -18,9 +18,12 @@ public class APIBrowser extends Application{
         return history.getLast();
     }
     Object toPrevious(){
-        if (history.size() > 1)
+        if (hasPrevious())
             history.removeLast();
         return getCurrent();
+    }
+    boolean hasPrevious(){
+        return history.size() > 1;
     }
     Object switchTo(Object o){
         history.add(o);
