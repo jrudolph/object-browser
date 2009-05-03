@@ -114,9 +114,28 @@ public class APIBrowserView extends ListActivity {
 
         return res;
     }
+    private static Item single(final String name,final Object o){
+        return new Item(){
+            @Override
+            public Object get() {
+                return o;
+            }
+            @Override
+            public String getName() {
+                return name;
+            }
+            @Override
+            public Class<?> getReturnType() {
+                return o.getClass();
+            }
+        };
+    }
     private ArrayList<Item> elementsOfArray(final Object array){
         int len = Array.getLength(array);
         ArrayList<Item> res = new ArrayList<Item>(len);
+
+        res.add(single("length",len));
+
         for (int i=0;i<len;i++){
             final int index = i;
             res.add(new Item(){
