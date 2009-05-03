@@ -21,11 +21,11 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class APIBrowserView extends ListActivity {
+public class ObjectBrowserView extends ListActivity {
 	private LayoutInflater inflater;
 
-	private APIBrowser getApp(){
-	    return (APIBrowser) getApplication();
+	private ObjectBrowser getApp(){
+	    return (ObjectBrowser) getApplication();
 	}
 
     /** Called when the activity is first created. */

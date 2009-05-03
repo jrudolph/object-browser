@@ -4,7 +4,7 @@ import java.util.LinkedList;
 
 import android.app.Application;
 
-public class APIBrowser extends Application{
+public class ObjectBrowser extends Application{
     LinkedList<Object> history = new LinkedList<Object>();
     private final static int MAX_HISTORY = 10;
 
