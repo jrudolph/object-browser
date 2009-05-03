@@ -1,5 +1,6 @@
 package net.virtualvoid.android.browser;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -113,6 +114,29 @@ public class APIBrowserView extends ListActivity {
 
         return res;
     }
+    private ArrayList<Item> elementsOfArray(final Object array){
+        int len = Array.getLength(array);
+        ArrayList<Item> res = new ArrayList<Item>(len);
+        for (int i=0;i<len;i++){
+            final int index = i;
+            res.add(new Item(){
+                @Override
+                public Object get() {
+                    return Array.get(array, index);
+                }
+                @Override
+                public String getName() {
+                    return Integer.toString(index);
+                }
+                @Override
+                public Class<?> getReturnType() {
+                    Object val = get();
+                    return val!=null? val.getClass() : array.getClass().getComponentType();
+                }
+            });
+        }
+        return res;
+    }
 
     private void setObject(Object current){
         Log.d(TAG,"setObject called with "+current);
@@ -124,8 +148,13 @@ public class APIBrowserView extends ListActivity {
     	((TextView)findViewById(R.id.clazz)).setText(current.getClass().getName());
 
     	subItems.clear();
+
+    	if (current.getClass().isArray()){
+    	    subItems.addAll(elementsOfArray(current));
+    	}
+
     	subItems.addAll(fieldsOf(current));
-    	subItems.addAll(propertiesOf(current));
+       	subItems.addAll(propertiesOf(current));
 
     	((Adapter)getListAdapter()).notifyDataSetInvalidated();
     }
