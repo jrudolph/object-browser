@@ -19,7 +19,7 @@ public class ObjectBrowser extends Application{
         return new HistoryItem(object);
     }
 
-    private final static int MAX_HISTORY = 10;
+    private final static int MAX_HISTORY = 25;
 
     @Override
     public void onCreate() {
