@@ -111,14 +111,14 @@ public class ObjectBrowserView extends ExpandableListActivity {
             if (convertView == null)
                 convertView = inflater.inflate(R.layout.item, null);
 
-            Item m = items.get(groupPosition).get(childPosition);
+            Item item = items.get(groupPosition).get(childPosition);
 
-            ((TextView) convertView.findViewById(R.id.name)).setText(m.getName());
-            ((TextView) convertView.findViewById(R.id.result_type)).setText(m.getReturnType().getName());
+            ((TextView) convertView.findViewById(R.id.name)).setText(item.getName());
+            ((TextView) convertView.findViewById(R.id.result_type)).setText(item.getReturnType().getName());
             TextView textView = (TextView) convertView.findViewById(R.id.value);
             ImageView imageView = (ImageView) convertView.findViewById(R.id.valueDrawable);
 
-            Object value = m.get();
+            Object value = item.get();
             if (value instanceof Drawable)
                 imageView.setImageDrawable((Drawable) value);
             else
