@@ -6,6 +6,8 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import android.app.ListActivity;
 import android.content.Context;
@@ -150,7 +152,32 @@ public class ObjectBrowserView extends ListActivity {
                 @Override
                 public Class<?> getReturnType() {
                     Object val = get();
-                    return val!=null? val.getClass() : array.getClass().getComponentType();
+                    return val!=null ? val.getClass() : array.getClass().getComponentType();
+                }
+            });
+        }
+        return res;
+    }
+    private ArrayList<Item> elementsOfMap(final Map<?,?> map){
+        int len = map.size();
+        ArrayList<Item> res = new ArrayList<Item>(len+1);
+
+        res.add(single("size",len));
+
+        for (final Entry<?,?> e:map.entrySet()){
+            res.add(new Item(){
+                @Override
+                public Object get() {
+                    return e.getValue();
+                }
+                @Override
+                public String getName() {
+                    return e.getKey().toString();
+                }
+                @Override
+                public Class<?> getReturnType() {
+                    Object val = get();
+                    return val!=null ? val.getClass() : Object.class;
                 }
             });
         }
@@ -168,9 +195,10 @@ public class ObjectBrowserView extends ListActivity {
 
     	subItems.clear();
 
-    	if (current.getClass().isArray()){
+    	if (current.getClass().isArray())
     	    subItems.addAll(elementsOfArray(current));
-    	}
+    	else if (current instanceof Map)
+    	    subItems.addAll(elementsOfMap((Map<?, ?>) current));
 
     	subItems.addAll(fieldsOf(current));
        	subItems.addAll(propertiesOf(current));
