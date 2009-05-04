@@ -9,7 +9,7 @@ public class ObjectBrowser extends Application{
 
     static class HistoryItem{
         Object object;
-        int listPosition;
+        long listPosition;
         public HistoryItem(Object object) {
             super();
             this.object = object;
@@ -38,7 +38,7 @@ public class ObjectBrowser extends Application{
     boolean hasPrevious(){
         return history.size() > 1;
     }
-    HistoryItem switchTo(Object o,int pos){
+    HistoryItem switchTo(Object o,long pos){
         if (!history.isEmpty()){
             getCurrent().listPosition = pos;
         }
@@ -50,7 +50,7 @@ public class ObjectBrowser extends Application{
 
         return getCurrent();
     }
-    HistoryItem move(Item i,int pos){
+    HistoryItem move(Item i,long pos){
         try {
             return switchTo(i.get(),pos);
         } catch (Exception e) {
