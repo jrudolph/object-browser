@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.virtualvoid.android.browser.ObjectBrowser.HistoryItem;
 import android.app.ListActivity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -184,7 +185,9 @@ public class ObjectBrowserView extends ListActivity {
         return res;
     }
 
-    private void setObject(Object current){
+    private void setObject(HistoryItem item){
+        Object current = item.object;
+
         Log.d(TAG,"setObject called with "+current);
 
         if (current == null)
@@ -203,12 +206,17 @@ public class ObjectBrowserView extends ListActivity {
     	subItems.addAll(fieldsOf(current));
        	subItems.addAll(propertiesOf(current));
 
-    	((Adapter)getListAdapter()).notifyDataSetInvalidated();
+       	((Adapter)getListView().getAdapter()).notifyDataSetInvalidated();
+       	// HACK: call layoutChildren before setting the selection, since
+       	// setSelection will not work otherwise
+       	Tools.layoutChildren(getListView());
+
+    	getListView().setSelection(item.listPosition);
     }
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-    	setObject(getApp().move(subItems.get(position)));
+    	setObject(getApp().move(subItems.get(position),position));
     }
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {

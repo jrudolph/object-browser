@@ -5,19 +5,32 @@ import java.util.LinkedList;
 import android.app.Application;
 
 public class ObjectBrowser extends Application{
-    LinkedList<Object> history = new LinkedList<Object>();
+    LinkedList<HistoryItem> history = new LinkedList<HistoryItem>();
+
+    static class HistoryItem{
+        Object object;
+        int listPosition;
+        public HistoryItem(Object object) {
+            super();
+            this.object = object;
+        }
+    }
+    private static HistoryItem history(Object object){
+        return new HistoryItem(object);
+    }
+
     private final static int MAX_HISTORY = 10;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        switchTo(this);
+        switchTo(this,0);
     }
 
-    Object getCurrent(){
+    HistoryItem getCurrent(){
         return history.getLast();
     }
-    Object toPrevious(){
+    HistoryItem toPrevious(){
         if (hasPrevious())
             history.removeLast();
         return getCurrent();
@@ -25,17 +38,21 @@ public class ObjectBrowser extends Application{
     boolean hasPrevious(){
         return history.size() > 1;
     }
-    Object switchTo(Object o){
-        history.add(o);
+    HistoryItem switchTo(Object o,int pos){
+        if (!history.isEmpty()){
+            getCurrent().listPosition = pos;
+        }
+
+        history.add(history(o));
 
         while (history.size() > MAX_HISTORY)
             history.remove(0);
 
-        return o;
+        return getCurrent();
     }
-    Object move(Item i){
+    HistoryItem move(Item i,int pos){
         try {
-            return switchTo(i.get());
+            return switchTo(i.get(),pos);
         } catch (Exception e) {
             // FAIL more noisily
             e.printStackTrace();
