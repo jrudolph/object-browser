@@ -132,7 +132,7 @@ public class ObjectBrowserView extends ListActivity {
     }
     private ArrayList<Item> elementsOfArray(final Object array){
         int len = Array.getLength(array);
-        ArrayList<Item> res = new ArrayList<Item>(len);
+        ArrayList<Item> res = new ArrayList<Item>(len+1);
 
         res.add(single("length",len));
 
