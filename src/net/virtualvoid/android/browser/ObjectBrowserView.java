@@ -79,7 +79,7 @@ public class ObjectBrowserView extends ListActivity {
     }
     private boolean isProperty(Method m){
         return !isStatic(m) // not static
-                && m.getName().startsWith("get")
+                && (m.getName().startsWith("get") || m.getName().startsWith("is"))
                 && m.getParameterTypes().length == 0;
     }
     private boolean isStatic(Member m){
