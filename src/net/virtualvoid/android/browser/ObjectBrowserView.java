@@ -65,14 +65,8 @@ public class ObjectBrowserView extends ExpandableListActivity {
 
     	if (item.listPosition == 0)
     	    list.setSelection(0);
-    	else{
-        	int group = ExpandableListView.getPackedPositionGroup(item.listPosition);
-            int child = ExpandableListView.getPackedPositionChild(item.listPosition);
-
-            Log.d(TAG,"pos "+item.listPosition+" group "+group+" child "+child);
-
+    	else
             list.setSelectionFromTop(list.getFlatListPosition(item.listPosition),5);
-    	}
     }
 
     @Override
