@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.os.Bundle;
 import android.text.Html;
+import android.text.Spanned;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -92,9 +93,11 @@ public class ObjectBrowserView extends ExpandableListActivity {
             return super.onKeyDown(keyCode, event);
     }
     private final static int HOME = 42;
+    private final static int HISTORY = -753;
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0,HOME,0,"Home").setIcon(android.R.drawable.ic_menu_myplaces);
+        menu.add(0,HISTORY,1,"History").setIcon(android.R.drawable.ic_menu_recent_history);
         return true;
     }
     @Override
@@ -103,6 +106,8 @@ public class ObjectBrowserView extends ExpandableListActivity {
         case HOME:
             setObject(getApp().switchTo(getApp().getHome(),getExpandableListView().getExpandableListPosition(getExpandableListView().getFirstVisiblePosition())));
             return true;
+        case HISTORY:
+            setObject(getApp().switchTo(getApp().history,getExpandableListView().getExpandableListPosition(getExpandableListView().getFirstVisiblePosition())));
         }
         return false;
     }
@@ -136,6 +141,8 @@ public class ObjectBrowserView extends ExpandableListActivity {
                 imageView.setImageDrawable((Drawable) value);
                 imageView.setScaleType(value instanceof NinePatchDrawable ? ScaleType.FIT_XY : ScaleType.CENTER_INSIDE);
             }
+            else if (value instanceof Spanned)
+                textView.setText((Spanned)value);
             else
                 textView.setText(Html.fromHtml(ItemFactory.toString(value)));
 
