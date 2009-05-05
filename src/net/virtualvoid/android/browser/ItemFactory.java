@@ -264,7 +264,7 @@ public class ItemFactory {
         ArrayList<Object> keys = new ArrayList<Object>();
         for (Object o:map.keySet())
             keys.add(o);
-        return new MappedListItemList<Object>("values",keys){
+        return new MappedListItemList<Object>("Values",keys){
             @Override
             protected Item map(final Object key) {
                 return new Item(){
