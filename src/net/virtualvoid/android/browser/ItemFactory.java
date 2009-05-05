@@ -285,6 +285,50 @@ public class ItemFactory {
             }
         };
     }
+    private static final int MAX_ELEMENTS = 100;
+    private static ItemList elementsOfIterable(final Iterable<?> i){
+        final ArrayList<Object> res = new ArrayList<Object>(MAX_ELEMENTS/2);
+
+        int num = 0;
+        for (Object o:i)
+            if (num < MAX_ELEMENTS){
+                res.add(o);
+                num++;
+            }
+            else
+                break;
+        final int numElements = num;
+        return join("Elements"
+                   ,singleton("Size",num >= MAX_ELEMENTS?">= "+MAX_ELEMENTS:num)
+                   ,new ItemList(){
+                        @Override
+                        public Item get(final int position) {
+                            return new Item(){
+                                @Override
+                                public Object get() {
+                                    return res.get(position);
+                                }
+                                @Override
+                                public String getName() {
+                                    return Integer.toString(position);
+                                }
+                                @Override
+                                public Class<?> getReturnType() {
+                                    Object val = get();
+                                    return val!=null ? val.getClass() : Object.class;
+                                }
+                            };
+                        }
+                        @Override
+                        public String getName() {
+                            return "Elements";
+                        }
+                        @Override
+                        public int size() {
+                            return numElements;
+                        }
+                   });
+    }
     private static ItemList contentsOfDirectory(final File dir){
         return join(
                 "Contents",
@@ -323,6 +367,8 @@ public class ItemFactory {
             add(res,elementsOfMap((Map<?, ?>) o));
         else if (o instanceof File && ((File) o).isDirectory())
             add(res,contentsOfDirectory((File) o));
+        else if (o instanceof Iterable)
+            add(res,elementsOfIterable((Iterable<?>) o));
 
         add(res,fieldsOf(o));
         add(res,propertiesOf(o));
