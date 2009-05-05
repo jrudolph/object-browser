@@ -49,7 +49,7 @@ public class ObjectBrowserView extends ExpandableListActivity {
             return;
 
     	((TextView)findViewById(R.id.object)).setText(Html.fromHtml(ItemFactory.toString(current)));
-    	((TextView)findViewById(R.id.clazz)).setText(current.getClass().getName());
+    	((TextView)findViewById(R.id.clazz)).setText(current.getClass().getCanonicalName());
 
     	items.clear();
     	items.addAll(ItemFactory.itemsFor(current));
@@ -109,7 +109,7 @@ public class ObjectBrowserView extends ExpandableListActivity {
             Item item = items.get(groupPosition).get(childPosition);
 
             ((TextView) convertView.findViewById(R.id.name)).setText(item.getName());
-            ((TextView) convertView.findViewById(R.id.result_type)).setText(item.getReturnType().getName());
+            ((TextView) convertView.findViewById(R.id.result_type)).setText(item.getReturnType().getCanonicalName());
             TextView textView = (TextView) convertView.findViewById(R.id.value);
             ImageView imageView = (ImageView) convertView.findViewById(R.id.valueDrawable);
 
