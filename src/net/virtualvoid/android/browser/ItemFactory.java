@@ -13,6 +13,10 @@ import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+
 public class ItemFactory {
     static abstract class MappedItemList<T> implements ItemList{
         private String name;
@@ -355,6 +359,27 @@ public class ItemFactory {
                     }
                 });
     }
+    private static MappedListItemList<PackageInfo> packagesFromPM(final PackageManager pm) {
+        return new MappedListItemList<PackageInfo>("Installed Packages",pm.getInstalledPackages(0xffffffff)){
+            @Override
+            protected Item map(final PackageInfo info) {
+                return new Item(){
+                    @Override
+                    public Object get() {
+                        return info;
+                    }
+                    @Override
+                    public CharSequence getName() {
+                        return pm.getApplicationLabel(info.applicationInfo);
+                    }
+                    @Override
+                    public Class<?> getReturnType() {
+                        return ApplicationInfo.class;
+                    }
+                };
+            }
+        };
+    }
 
     private static void add(ArrayList<ItemList> list,ItemList il){
         if (il.size() > 0)
@@ -371,6 +396,8 @@ public class ItemFactory {
             add(res,contentsOfDirectory((File) o));
         else if (o instanceof Iterable)
             add(res,elementsOfIterable((Iterable<?>) o));
+        else if (o instanceof PackageManager)
+            add(res,packagesFromPM((PackageManager) o));
 
         add(res,fieldsOf(o));
         add(res,propertiesOf(o));
