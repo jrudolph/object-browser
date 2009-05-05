@@ -398,6 +398,8 @@ public class ItemFactory {
             add(res,elementsOfIterable((Iterable<?>) o));
         else if (o instanceof PackageManager)
             add(res,packagesFromPM((PackageManager) o));
+        else if (o instanceof ItemList)
+            add(res,(ItemList) o);
 
         add(res,fieldsOf(o));
         add(res,propertiesOf(o));
