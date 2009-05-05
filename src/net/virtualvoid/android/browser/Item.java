@@ -1,7 +1,7 @@
 package net.virtualvoid.android.browser;
 
 public interface Item {
-    String getName();
+    CharSequence getName();
     Class<?> getReturnType();
     Object get();
 }
