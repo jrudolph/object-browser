@@ -143,6 +143,8 @@ public class ObjectBrowserView extends ExpandableListActivity {
             }
             else if (value instanceof Spanned)
                 textView.setText((Spanned)value);
+            else if (value instanceof Formattable)
+                textView.setText(((Formattable) value).formatted());
             else
                 textView.setText(Html.fromHtml(ItemFactory.toString(value)));
 
