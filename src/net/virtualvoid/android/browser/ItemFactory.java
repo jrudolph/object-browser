@@ -1,5 +1,6 @@
 package net.virtualvoid.android.browser;
 
+import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -13,25 +14,54 @@ import java.util.NoSuchElementException;
 public class ItemFactory {
     static abstract class MappedItemList<T> implements ItemList{
         private String name;
-        private List<T> items;
 
-        public MappedItemList(String name, List<T> items) {
+        public MappedItemList(String name) {
             this.name = name;
-            this.items = items;
         }
 
+        protected abstract T getOriginal(int position);
         protected abstract Item map(T object);
         @Override
         public Item get(int position) {
-            return map(items.get(position));
+            return map(getOriginal(position));
         }
         @Override
         public String getName() {
             return name;
         }
+
+    }
+    static abstract class MappedListItemList<T> extends MappedItemList<T>{
+        private List<T> items;
+
+        public MappedListItemList(String name, List<T> items) {
+            super(name);
+            this.items = items;
+        }
+
         @Override
         public int size() {
             return items.size();
+        }
+        @Override
+        protected T getOriginal(int index) {
+            return items.get(index);
+        }
+    }
+    static abstract class MappedArrayItemList<T> extends MappedItemList<T>{
+        private T[] items;
+
+        public MappedArrayItemList(String name, T[] items) {
+            super(name);
+            this.items = items;
+        }
+        @Override
+        public int size() {
+            return items.length;
+        }
+        @Override
+        protected T getOriginal(int arg0) {
+            return items[arg0];
         }
     }
 
@@ -143,9 +173,23 @@ public class ItemFactory {
 
         return fromList("Properties",res);
     }
+    private final static ItemList emptyList = new ItemList(){
+        @Override
+        public String getName() {
+            return "<empty>";
+        }
+        @Override
+        public int size() {
+            return 0;
+        }
+        @Override
+        public Item get(int position) {
+            throw new NoSuchElementException("no such position "+position);
+        }
+    };
     private static ItemList singleton(final String name,final Object o){
         final Item item = single(name,o);
-        return new ItemList(){
+        return o == null ? emptyList : new ItemList(){
             @Override
             public Item get(int position) {
                 if (position == 0)
@@ -220,7 +264,7 @@ public class ItemFactory {
         ArrayList<Object> keys = new ArrayList<Object>();
         for (Object o:map.keySet())
             keys.add(o);
-        return new MappedItemList<Object>("values",keys){
+        return new MappedListItemList<Object>("values",keys){
             @Override
             protected Item map(final Object key) {
                 return new Item(){
@@ -241,6 +285,30 @@ public class ItemFactory {
             }
         };
     }
+    private static ItemList contentsOfDirectory(final File dir){
+        return join(
+                "Contents",
+                singleton("..",dir.getParentFile())
+                ,new MappedArrayItemList<File>("Contents",dir.listFiles()){
+                    @Override
+                    protected Item map(final File f) {
+                        return new Item(){
+                            @Override
+                            public Object get() {
+                                return f;
+                            }
+                            @Override
+                            public String getName() {
+                                return f.getName();
+                            }
+                            @Override
+                            public Class<?> getReturnType() {
+                                return File.class;
+                            }
+                        };
+                    }
+                });
+    }
 
     private static void add(ArrayList<ItemList> list,ItemList il){
         if (il.size() > 0)
@@ -253,6 +321,8 @@ public class ItemFactory {
             add(res,elementsOfArray(o));
         else if (o instanceof Map)
             add(res,elementsOfMap((Map<?, ?>) o));
+        else if (o instanceof File && ((File) o).isDirectory())
+            add(res,contentsOfDirectory((File) o));
 
         add(res,fieldsOf(o));
         add(res,propertiesOf(o));
