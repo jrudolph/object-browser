@@ -101,7 +101,7 @@ public class ObjectBrowserView extends ExpandableListActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()){
         case HOME:
-            setObject(getApp().switchTo(getApp().getHome(),getSelectedPosition()));
+            setObject(getApp().switchTo(getApp().getHome(),getExpandableListView().getExpandableListPosition(getExpandableListView().getFirstVisiblePosition())));
             return true;
         }
         return false;
