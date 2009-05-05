@@ -1,0 +1,11 @@
+<b>Grouping</b> of items
+Set history size to 25 elements
+Show <b>directory contents</b>
+Show elements of <b>Iterable</b>
+More intelligent stringification
+Show canonical class name
+Show 'Installed Packages' in <b>PackageManager</b>
+Center drawables
+Fit NinePatchDrawables instead of centering
+New <b>Home</b> start object featuring system icons and package manager, accessible via Menu
+
