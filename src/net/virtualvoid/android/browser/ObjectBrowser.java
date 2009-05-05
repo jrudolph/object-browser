@@ -4,6 +4,7 @@ import java.util.LinkedList;
 
 import android.app.Application;
 
+@Textual("ObjectBrowser{history-depth = #history.size}")
 public class ObjectBrowser extends Application{
     LinkedList<HistoryItem> history = new LinkedList<HistoryItem>();
 

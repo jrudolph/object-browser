@@ -7,6 +7,7 @@ import android.app.ExpandableListActivity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -47,7 +48,7 @@ public class ObjectBrowserView extends ExpandableListActivity {
         if (current == null)
             return;
 
-    	((TextView)findViewById(R.id.object)).setText(current.toString());
+    	((TextView)findViewById(R.id.object)).setText(Html.fromHtml(ItemFactory.toString(current)));
     	((TextView)findViewById(R.id.clazz)).setText(current.getClass().getName());
 
     	items.clear();
@@ -116,7 +117,7 @@ public class ObjectBrowserView extends ExpandableListActivity {
             if (value instanceof Drawable)
                 imageView.setImageDrawable((Drawable) value);
             else
-                textView.setText(String.valueOf(value));
+                textView.setText(Html.fromHtml(ItemFactory.toString(value)));
 
             textView.setVisibility(visibility(!(value instanceof Drawable)));
             imageView.setVisibility(visibility(value instanceof Drawable));

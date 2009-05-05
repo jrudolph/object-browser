@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ItemFactory {
     static abstract class MappedItemList<T> implements ItemList{
@@ -374,5 +376,85 @@ public class ItemFactory {
         add(res,propertiesOf(o));
 
         return res;
+    }
+
+    private static String capitalized(String str){
+        return str.substring(0,1).toUpperCase()+str.substring(1);
+    }
+    private static Method getMethod(Class<?> clazz,String name){
+        try {
+            return clazz.getMethod(name);
+        } catch (SecurityException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+    }
+    private static Object getFieldOf(String field,Object o){
+        try {
+            Class<? extends Object> clazz = o.getClass();
+            Method m = getMethod(clazz,"get"+capitalized(field));
+            if (m == null)
+                m = getMethod(clazz,field);
+
+            if (m != null)
+                return m.invoke(o);
+            else{
+                Field f = clazz.getDeclaredField(field);
+                f.setAccessible(true);
+                return f.get(o);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private static String eval(String path,Object o){
+        String[] parts = path.split("\\.");
+
+        for(String part:parts)
+            o = getFieldOf(part,o);
+        return toString(o);
+    }
+    private static Pattern splish = Pattern.compile("#(\\w+(?:\\.\\w+)*)");
+    private static String format(String format,Object o){
+        Matcher m = splish.matcher(format);
+        StringBuffer res = new StringBuffer();
+        while(m.find())
+            m.appendReplacement(res, eval(m.group(1),o));
+
+        m.appendTail(res);
+        return res.toString();
+    }
+    private static final int MAX_ARRAY_ELEMENTS = 5;
+    private static String arrayToString(Object o){
+        StringBuffer buffer = new StringBuffer();
+        buffer.append('[');
+
+        int len = Array.getLength(o);
+        for (int i=0;i<Math.min(len,MAX_ARRAY_ELEMENTS);i++){
+            if (i != 0)
+                buffer.append(", ");
+            buffer.append(toString(Array.get(o,i)));
+        }
+        int remaining = len - MAX_ARRAY_ELEMENTS;
+        if (remaining > 0)
+            buffer.append(", ... (<i>").append(remaining).append(" more</i>)");
+
+        buffer.append(']');
+        return buffer.toString();
+    }
+    public static String toString(Object o){
+        if (o == null)
+            return "null";
+        else {
+            Class<? extends Object> clazz = o.getClass();
+            Textual text = clazz.getAnnotation(Textual.class);
+            if (text != null)
+                return format(text.value(),o);
+            else if (clazz.isArray())
+                return arrayToString(o);
+            else
+                return String.valueOf(o);
+        }
     }
 }
