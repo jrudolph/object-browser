@@ -7,6 +7,7 @@ import android.app.Application;
 @Textual("ObjectBrowser{history-depth = #history.size}")
 public class ObjectBrowser extends Application{
     LinkedList<HistoryItem> history = new LinkedList<HistoryItem>();
+    Home mycastle = new Home(this);
 
     static class HistoryItem{
         Object object;
@@ -25,7 +26,11 @@ public class ObjectBrowser extends Application{
     @Override
     public void onCreate() {
         super.onCreate();
-        switchTo(this,0);
+        switchTo(mycastle,0);
+    }
+
+    Home getHome(){
+        return mycastle;
     }
 
     HistoryItem getCurrent(){

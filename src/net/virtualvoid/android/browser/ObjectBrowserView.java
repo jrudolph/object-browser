@@ -12,6 +12,8 @@ import android.text.Html;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
@@ -89,7 +91,21 @@ public class ObjectBrowserView extends ExpandableListActivity {
         else
             return super.onKeyDown(keyCode, event);
     }
-
+    private final static int HOME = 42;
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0,HOME,0,"Home").setIcon(android.R.drawable.ic_menu_myplaces);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()){
+        case HOME:
+            setObject(getApp().switchTo(getApp().getHome(),getSelectedPosition()));
+            return true;
+        }
+        return false;
+    }
 	class Adapter extends BaseExpandableListAdapter{
 	    private int visibility(boolean visible){
             return visible ? View.VISIBLE : View.GONE;
