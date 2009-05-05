@@ -6,6 +6,7 @@ import net.virtualvoid.android.browser.ObjectBrowser.HistoryItem;
 import android.app.ExpandableListActivity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.NinePatchDrawable;
 import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
@@ -17,6 +18,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.ImageView.ScaleType;
 
 public class ObjectBrowserView extends ExpandableListActivity {
 	private LayoutInflater inflater;
@@ -114,8 +116,10 @@ public class ObjectBrowserView extends ExpandableListActivity {
             ImageView imageView = (ImageView) convertView.findViewById(R.id.valueDrawable);
 
             Object value = item.get();
-            if (value instanceof Drawable)
+            if (value instanceof Drawable){
                 imageView.setImageDrawable((Drawable) value);
+                imageView.setScaleType(value instanceof NinePatchDrawable ? ScaleType.FIT_XY : ScaleType.CENTER_INSIDE);
+            }
             else
                 textView.setText(Html.fromHtml(ItemFactory.toString(value)));
 
