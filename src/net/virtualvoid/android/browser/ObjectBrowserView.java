@@ -21,6 +21,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ImageView.ScaleType;
 
 public class ObjectBrowserView extends ExpandableListActivity {
@@ -92,12 +93,17 @@ public class ObjectBrowserView extends ExpandableListActivity {
         else
             return super.onKeyDown(keyCode, event);
     }
+    // You say, this generates a lookupswitch instead of a tableswitch?
+    // You're right! I say: Removing the fun from programming in the same way
+    // as redundancy, is premature optimization.
     private final static int HOME = 42;
     private final static int HISTORY = -753;
+    private final static int SAVE = 123456;
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0,HOME,0,"Home").setIcon(android.R.drawable.ic_menu_myplaces);
         menu.add(0,HISTORY,1,"History").setIcon(android.R.drawable.ic_menu_recent_history);
+        menu.add(0,SAVE,2,"Save").setIcon(android.R.drawable.ic_menu_save);
         return true;
     }
     @Override
@@ -108,6 +114,10 @@ public class ObjectBrowserView extends ExpandableListActivity {
             return true;
         case HISTORY:
             setObject(getApp().switchTo(getApp().history,getExpandableListView().getExpandableListPosition(getExpandableListView().getFirstVisiblePosition())));
+        case SAVE:
+            getApp().addSaved(getApp().getCurrent().object);
+            Toast.makeText(this, "The current object was saved in your favourites. See Home.getFavourites().", Toast.LENGTH_SHORT)
+                 .show();
         }
         return false;
     }

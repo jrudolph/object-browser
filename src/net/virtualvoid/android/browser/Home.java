@@ -23,6 +23,9 @@ public class Home {
         return application;
     }
 
+    public ArrayList<Object> getFavourites(){
+        return application.saved;
+    }
     public ItemList getSystemDrawables(){
         return new ItemFactory.MappedArrayItemList<Field>("System icons",android.R.drawable.class.getFields()){
             @Override

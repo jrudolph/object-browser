@@ -1,5 +1,6 @@
 package net.virtualvoid.android.browser;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 import android.app.Application;
@@ -7,6 +8,7 @@ import android.app.Application;
 @Textual("ObjectBrowser{history-depth = #history.size}")
 public class ObjectBrowser extends Application{
     LinkedList<HistoryItem> history = new LinkedList<HistoryItem>();
+    ArrayList<Object> saved = new ArrayList<Object>();
     Home mycastle = new Home(this);
 
     static class HistoryItem{
@@ -64,5 +66,9 @@ public class ObjectBrowser extends Application{
             e.printStackTrace();
             return getCurrent();
         }
+    }
+
+    public void addSaved(Object object) {
+        saved.add(object);
     }
 }
