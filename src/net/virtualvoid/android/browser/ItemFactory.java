@@ -16,6 +16,8 @@ import java.util.regex.Pattern;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
 public class ItemFactory {
     static abstract class MappedItemList<T> implements ItemList{
@@ -359,6 +361,38 @@ public class ItemFactory {
                     }
                 });
     }
+    private static ItemList tablesOfDb(final String dbPath){
+        final SQLiteDatabase db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY);
+        final Cursor cursor = db.rawQuery("select name from sqlite_master where type='table'", null);
+        return new MappedItemList<String>("Tables"){
+            @Override
+            protected String getOriginal(int position) {
+                cursor.moveToPosition(position);
+                return cursor.getString(0);
+            }
+            @Override
+            protected Item map(final String table) {
+                return new Item(){
+                    @Override
+                    public Object get() {
+                        return db.rawQuery("select * from "+table,null);
+                    }
+                    @Override
+                    public CharSequence getName() {
+                        return table;
+                    }
+                    @Override
+                    public Class<?> getReturnType() {
+                        return Cursor.class;
+                    }
+                };
+            }
+            @Override
+            public int size() {
+                return cursor.getCount();
+            }
+        };
+    }
     private static MappedListItemList<PackageInfo> packagesFromPM(final PackageManager pm) {
         return new MappedListItemList<PackageInfo>("Installed Packages",pm.getInstalledPackages(0xffffffff)){
             @Override
@@ -400,6 +434,8 @@ public class ItemFactory {
             add(res,packagesFromPM((PackageManager) o));
         else if (o instanceof ItemList)
             add(res,(ItemList) o);
+        else if (o instanceof File && ((File)o).getName().endsWith(".db"))
+            add(res,tablesOfDb(((File) o).getPath()));
 
         add(res,fieldsOf(o));
         add(res,propertiesOf(o));
