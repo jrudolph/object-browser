@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import net.virtualvoid.android.browser.ObjectBrowser.HistoryItem;
 import android.app.ExpandableListActivity;
 import android.content.Context;
+import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.os.Bundle;
@@ -150,6 +151,12 @@ public class ObjectBrowserView extends ExpandableListActivity {
             if (value instanceof Drawable){
                 imageView.setImageDrawable((Drawable) value);
                 imageView.setScaleType(value instanceof NinePatchDrawable ? ScaleType.FIT_XY : ScaleType.CENTER_INSIDE);
+                if (value instanceof AnimationDrawable){
+                    AnimationDrawable anim = (AnimationDrawable) value;
+                    anim.setCallback(imageView);
+                    anim.start();
+                    anim.setOneShot(false);
+                }
             }
             else if (value instanceof Spanned)
                 textView.setText((Spanned)value);
