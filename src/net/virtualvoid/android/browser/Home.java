@@ -1,6 +1,7 @@
 package net.virtualvoid.android.browser;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -25,6 +26,9 @@ public class Home {
 
     public ArrayList<Object> getFavourites(){
         return application.saved;
+    }
+    public File getFileSystemRoot() throws IOException{
+        return File.listRoots()[0].getCanonicalFile();
     }
     public ItemList getSystemDrawables(){
         return new ItemFactory.MappedArrayItemList<Field>("System icons",android.R.drawable.class.getFields()){
