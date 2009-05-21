@@ -393,6 +393,36 @@ public class ItemFactory {
             }
         };
     }
+    private static ItemList resultsOfQuery(final Cursor cursor){
+        return new ItemList(){
+            @Override
+            public Item get(final int position) {
+                return new Item(){
+                    @Override
+                    public Object get() {
+                        cursor.moveToPosition(position);
+                        return DBTools.rowAsMap(cursor);
+                    }
+                    @Override
+                    public CharSequence getName() {
+                        return Integer.toString(position);
+                    }
+                    @Override
+                    public Class<?> getReturnType() {
+                        return Map.class;
+                    }
+                };
+            }
+            @Override
+            public CharSequence getName() {
+                return "Results";
+            }
+            @Override
+            public int size() {
+                return cursor.getCount();
+            }
+        };
+    }
     private static MappedListItemList<PackageInfo> packagesFromPM(final PackageManager pm) {
         return new MappedListItemList<PackageInfo>("Installed Packages",pm.getInstalledPackages(0xffffffff)){
             @Override
@@ -436,6 +466,8 @@ public class ItemFactory {
             add(res,(ItemList) o);
         else if (o instanceof File && ((File)o).getName().endsWith(".db"))
             add(res,tablesOfDb(((File) o).getPath()));
+        else if (o instanceof Cursor)
+            add(res,resultsOfQuery((Cursor) o));
 
         add(res,fieldsOf(o));
         add(res,propertiesOf(o));
