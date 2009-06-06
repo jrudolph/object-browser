@@ -518,8 +518,12 @@ public class ItemFactory {
                             }
                         }
                         @Override
-                        protected Object[] originalValues() {
-                            return MappedArray.this.originalValues();
+                        protected int numValues() {
+                            return MappedArray.this.numValues();
+                        }
+                        @Override
+                        protected Object originalValueAt(int pos) {
+                            return MappedArray.this.originalValueAt(pos);
                         }
                     };
                 }
@@ -533,29 +537,31 @@ public class ItemFactory {
                 }
             };
         }
-        protected abstract Object mappedValueAt(int position);
-        protected abstract Object[] originalValues();
+        protected abstract Object mappedValueAt(int pos);
+        protected abstract Object originalValueAt(int pos);
+        protected abstract int numValues();
         @Override
         public String toString() {
             StringBuffer buffer = new StringBuffer();
-            Object[] oa = originalValues();
-            int length = Math.min(oa.length,MAX_ARRAY_ELEMENTS);
+            int num = numValues();
+            int length = Math.min(num,MAX_ARRAY_ELEMENTS);
             for (int i = 0;i<length;i++){
                 if (buffer.length() != 0)
                     buffer.append('\n');
-                buffer.append(ItemFactory.toString(oa[i]))
+                buffer.append(ItemFactory.toString(originalValueAt(i)))
                     .append(':')
                     .append(ItemFactory.toString(mappedValueAt(i)));
             }
-            if (oa.length > length)
+            int moreValues = num - length;
+            if (moreValues > 0)
                 buffer.append("\n... <i>(+ ")
-                    .append(oa.length - length)
+                    .append(moreValues)
                     .append(" more")
                     .append(")</i>");
             return buffer.toString();
         }
         public Object[] getArray(){
-            int length = originalValues().length;
+            int length = numValues();
             Object []res = new Object[length];
             for (int i=0;i<length;i++)
                 res[i] = mappedValueAt(i);
@@ -564,25 +570,46 @@ public class ItemFactory {
         public Map<Object,Object> getMap(){
             HashMap<Object, Object> res = new HashMap<Object, Object>();
 
-            Object[] oa = originalValues();
-            int length = oa.length;
+            int length = numValues();
 
             for (int i=0;i<length;i++)
-                res.put(oa[i],mappedValueAt(i));
+                res.put(originalValueAt(i),mappedValueAt(i));
             return res;
         }
     }
-    private static ItemList mappedArray(final Object[] array){
-        return new MappedArray(array.getClass().getComponentType()){
-            @Override
-            protected Object mappedValueAt(int pos) {
-                return array[pos];
-            }
-            @Override
-            protected Object[] originalValues() {
-                return array;
-            }
-        };
+    private static ItemList mappedArray(final Object o){
+        if (o instanceof Object[]){
+            final Object[] array = (Object[]) o;
+            return new MappedArray(array.getClass().getComponentType()){
+                @Override
+                protected Object mappedValueAt(int pos) {
+                    return array[pos];
+                }
+                @Override
+                protected int numValues() {
+                    return array.length;
+                }
+                @Override
+                protected Object originalValueAt(int pos) {
+                    return array[pos];
+                }
+            };
+        }
+        else
+            return new MappedArray(o.getClass().getComponentType()){
+                @Override
+                protected Object mappedValueAt(int pos) {
+                    return Array.get(o, pos);
+                }
+                @Override
+                protected int numValues() {
+                    return Array.getLength(o);
+                }
+                @Override
+                protected Object originalValueAt(int pos) {
+                    return Array.get(o, pos);
+                }
+            };
     }
     private static void add(ArrayList<ItemList> list,ItemList il){
         if (il.size() > 0)
@@ -595,7 +622,7 @@ public class ItemFactory {
 
         if (o.getClass().isArray()){
             add(res,elementsOfArray(o));
-            add(res,fromArray("Actions", single("Mapped array",mappedArray((Object[]) o))));
+            add(res,fromArray("Actions", single("Mapped array",mappedArray(o))));
         }
         else if (o instanceof Map)
             add(res,elementsOfMap((Map<?, ?>) o));
