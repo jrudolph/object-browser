@@ -57,6 +57,8 @@ public class ObjectBrowserView extends ExpandableListActivity {
         if (current == null)
             return;
 
+        setTitle("Object Browser: "+(current instanceof Formattable ? ((Formattable) current).formatted() : current.toString()));
+
         ExpandableListView list = getExpandableListView();
 
     	items.clear();
