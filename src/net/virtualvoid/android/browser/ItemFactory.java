@@ -89,6 +89,22 @@ public class ItemFactory {
             }
         };
     }
+    private static ItemList fromArray(final String name,final Item...is){
+        return new ItemList(){
+            @Override
+            public Item get(int position) {
+                return is[position];
+            }
+            @Override
+            public CharSequence getName() {
+                return name;
+            }
+            @Override
+            public int size() {
+                return is.length;
+            }
+        };
+    }
     private static ItemList join(final String name,final ItemList list1,final ItemList list2){
         return new ItemList(){
             @Override
@@ -444,6 +460,37 @@ public class ItemFactory {
             }
         };
     }
+    private static ItemList informationFor(final Object o){
+        return fromArray("This"
+                    ,new Item(){
+                        @Override
+                        public Object get() {
+                            return o.toString();
+                        }
+                        @Override
+                        public CharSequence getName() {
+                            return "String representation";
+                        }
+                        @Override
+                        public Class<?> getReturnType() {
+                            return String.class;
+                        }
+                    }
+                    ,new Item(){
+                        @Override
+                        public Object get() {
+                            return o.getClass();
+                        }
+                        @Override
+                        public CharSequence getName() {
+                            return "Class";
+                        }
+                        @Override
+                        public Class<?> getReturnType() {
+                            return Class.class;
+                        }
+                    });
+    }
 
     private static void add(ArrayList<ItemList> list,ItemList il){
         if (il.size() > 0)
@@ -451,6 +498,8 @@ public class ItemFactory {
     }
     public static ArrayList<ItemList> itemsFor(Object o){
         ArrayList<ItemList> res = new ArrayList<ItemList>();
+
+        add(res,informationFor(o));
 
         if (o.getClass().isArray())
             add(res,elementsOfArray(o));

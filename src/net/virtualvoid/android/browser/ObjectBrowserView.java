@@ -27,6 +27,7 @@ import android.widget.ImageView.ScaleType;
 
 public class ObjectBrowserView extends ExpandableListActivity {
 	private LayoutInflater inflater;
+    private Adapter myAdapter;
 
 	private ObjectBrowser getApp(){
 	    return (ObjectBrowser) getApplication();
@@ -39,7 +40,8 @@ public class ObjectBrowserView extends ExpandableListActivity {
 
         inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        setListAdapter(new Adapter());
+        myAdapter = new Adapter();
+        setListAdapter(myAdapter);
         setContentView(R.layout.main);
 
         setObject(getApp().getCurrent());
@@ -55,15 +57,13 @@ public class ObjectBrowserView extends ExpandableListActivity {
         if (current == null)
             return;
 
-    	((TextView)findViewById(R.id.object)).setText(Html.fromHtml(ItemFactory.toString(current)));
-    	((TextView)findViewById(R.id.clazz)).setText(current.getClass().getCanonicalName());
+        ExpandableListView list = getExpandableListView();
 
     	items.clear();
     	items.addAll(ItemFactory.itemsFor(current));
 
-    	((Adapter)getExpandableListAdapter()).notifyDataSetInvalidated();
+    	myAdapter.notifyDataSetInvalidated();
 
-    	ExpandableListView list = getExpandableListView();
         // HACK: call layoutChildren before setting the selection, since
         // setSelection will not work otherwise
         Tools.layoutChildren(list);
