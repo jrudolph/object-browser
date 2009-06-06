@@ -7,6 +7,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -498,7 +499,91 @@ public class ItemFactory {
                         }
                     });
     }
+    static abstract class MappedArray extends MappedListItemList<Method>{
+        public MappedArray(Class<?> clazz) {
+            super("Map with", propertyMethodsOf(clazz));
+        }
+        @Override
+        protected Item map(final Method m) {
+            return new Item(){
+                @Override
+                public Object get() {
+                    return new MappedArray(m.getReturnType()){
+                        @Override
+                        protected Object mappedValueAt(int position) {
+                            try {
+                                return m.invoke(MappedArray.this.mappedValueAt(position));
+                            } catch (Exception e) {
+                                throw new Error(e);
+                            }
+                        }
+                        @Override
+                        protected Object[] originalValues() {
+                            return MappedArray.this.originalValues();
+                        }
+                    };
+                }
+                @Override
+                public CharSequence getName() {
+                    return m.getName();
+                }
+                @Override
+                public Class<?> getReturnType() {
+                    return MappedArray.class;
+                }
+            };
+        }
+        protected abstract Object mappedValueAt(int position);
+        protected abstract Object[] originalValues();
+        @Override
+        public String toString() {
+            StringBuffer buffer = new StringBuffer();
+            Object[] oa = originalValues();
+            int length = Math.min(oa.length,MAX_ARRAY_ELEMENTS);
+            for (int i = 0;i<length;i++){
+                if (buffer.length() != 0)
+                    buffer.append('\n');
+                buffer.append(ItemFactory.toString(oa[i]))
+                    .append(':')
+                    .append(ItemFactory.toString(mappedValueAt(i)));
+            }
+            if (oa.length > length)
+                buffer.append("\n... <i>(+ ")
+                    .append(oa.length - length)
+                    .append(" more")
+                    .append(")</i>");
+            return buffer.toString();
+        }
+        public Object[] getArray(){
+            int length = originalValues().length;
+            Object []res = new Object[length];
+            for (int i=0;i<length;i++)
+                res[i] = mappedValueAt(i);
+            return res;
+        }
+        public Map<Object,Object> getMap(){
+            HashMap<Object, Object> res = new HashMap<Object, Object>();
 
+            Object[] oa = originalValues();
+            int length = oa.length;
+
+            for (int i=0;i<length;i++)
+                res.put(oa[i],mappedValueAt(i));
+            return res;
+        }
+    }
+    private static ItemList mappedArray(final Object[] array){
+        return new MappedArray(array.getClass().getComponentType()){
+            @Override
+            protected Object mappedValueAt(int pos) {
+                return array[pos];
+            }
+            @Override
+            protected Object[] originalValues() {
+                return array;
+            }
+        };
+    }
     private static void add(ArrayList<ItemList> list,ItemList il){
         if (il.size() > 0)
             list.add(il);
@@ -508,8 +593,10 @@ public class ItemFactory {
 
         add(res,informationFor(o));
 
-        if (o.getClass().isArray())
+        if (o.getClass().isArray()){
             add(res,elementsOfArray(o));
+            add(res,fromArray("Actions", single("Mapped array",mappedArray((Object[]) o))));
+        }
         else if (o instanceof Map)
             add(res,elementsOfMap((Map<?, ?>) o));
         else if (o instanceof File && ((File) o).isDirectory())
