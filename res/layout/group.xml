@@ -7,5 +7,4 @@
   android:textAppearance="?android:attr/textAppearanceMedium"
   android:textStyle="bold"
   android:gravity="center"
-  android:minLines="2"
 />
