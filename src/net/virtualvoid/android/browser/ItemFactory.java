@@ -168,12 +168,19 @@ public class ItemFactory {
     private static boolean isStatic(Member m){
         return (m.getModifiers()&Modifier.STATIC) != 0;
     }
+    private static ArrayList<Method> propertyMethodsOf(final Class<?> clazz){
+        Method[] ms = clazz.getMethods();
+        ArrayList<Method> res = new ArrayList<Method>(ms.length);
+        for(Method m:ms)
+            if(isProperty(m))
+                res.add(m);
+        return res;
+    }
     private static ItemList propertiesOf(final Object o){
-        ArrayList<Item> res = new ArrayList<Item>();
-
-        for (final Method m:o.getClass().getMethods())
-            if (isProperty(m))
-                res.add(new Item(){
+        return new MappedListItemList<Method>("Properties",propertyMethodsOf(o.getClass())){
+            @Override
+            protected Item map(final Method m) {
+                return new Item(){
                     {
                         m.setAccessible(true);
                     }
@@ -193,9 +200,9 @@ public class ItemFactory {
                     public Class<?> getReturnType() {
                         return m.getReturnType();
                     }
-                });
-
-        return fromList("Properties",res);
+                };
+            }
+        };
     }
     private final static ItemList emptyList = new ItemList(){
         @Override
