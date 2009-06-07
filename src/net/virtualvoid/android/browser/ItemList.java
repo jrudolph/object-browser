@@ -1,7 +1,5 @@
 package net.virtualvoid.android.browser;
 
-public interface ItemList {
-    Item get(int position);
-    int size();
+public interface ItemList extends RA<Item>{
     CharSequence getName();
 }

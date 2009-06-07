@@ -1,7 +1,5 @@
 package net.virtualvoid.android.browser;
 
-public interface MetaItemList {
-    MetaItem get(int position);
-    int size();
+public interface MetaItemList extends RA<MetaItem>{
     CharSequence getName();
 }
