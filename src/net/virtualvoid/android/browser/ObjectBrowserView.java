@@ -12,17 +12,20 @@ import android.os.Bundle;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
 import android.widget.ImageView.ScaleType;
 
 public class ObjectBrowserView extends ExpandableListActivity {
@@ -43,6 +46,7 @@ public class ObjectBrowserView extends ExpandableListActivity {
         myAdapter = new Adapter();
         setListAdapter(myAdapter);
         setContentView(R.layout.main);
+        registerForContextMenu(getExpandableListView());
 
         setObject(getApp().getCurrent());
     }
@@ -122,6 +126,28 @@ public class ObjectBrowserView extends ExpandableListActivity {
             getApp().addSaved(getApp().getCurrent().object);
             Toast.makeText(this, "The current object was saved in your favourites. See Home.getFavourites().", Toast.LENGTH_SHORT)
                  .show();
+            return true;
+        }
+        return false;
+    }
+    private final static int ITEM_LIST = 1000;
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v,
+            ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+
+        ExpandableListContextMenuInfo info = (ExpandableListContextMenuInfo) menuInfo;
+        int type = ExpandableListView.getPackedPositionType(info.packedPosition);
+        if (type == ExpandableListView.PACKED_POSITION_TYPE_GROUP){
+            menu.add(0,ITEM_LIST,0,"Go into ItemList");
+        }
+    }
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        long pos = ((ExpandableListContextMenuInfo)item.getMenuInfo()).packedPosition;
+        switch(item.getItemId()){
+        case ITEM_LIST:
+            setObject(getApp().switchTo(myAdapter.getGroup(ExpandableListView.getPackedPositionGroup(pos)),pos));
             return true;
         }
         return false;
