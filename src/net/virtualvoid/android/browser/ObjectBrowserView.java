@@ -117,10 +117,12 @@ public class ObjectBrowserView extends ExpandableListActivity {
             return true;
         case HISTORY:
             setObject(getApp().switchTo(getApp().history,getExpandableListView().getExpandableListPosition(getExpandableListView().getFirstVisiblePosition())));
+            return true;
         case SAVE:
             getApp().addSaved(getApp().getCurrent().object);
             Toast.makeText(this, "The current object was saved in your favourites. See Home.getFavourites().", Toast.LENGTH_SHORT)
                  .show();
+            return true;
         }
         return false;
     }
