@@ -241,7 +241,7 @@ public class ItemFactory {
                     }
                     @Override
                     public String getName() {
-                        return key.toString();
+                        return ItemFactory.toString(key);
                     }
                     @Override
                     public Class<?> getReturnType() {
@@ -463,7 +463,8 @@ public class ItemFactory {
                             return new MappedArray(item.getReturnType()){
                                 @Override
                                 protected Object mappedValueAt(int position) {
-                                    return item.get(MappedArray.this.mappedValueAt(position));
+                                    Object val = MappedArray.this.mappedValueAt(position);
+                                    return val == null ? null : item.get(val);
                                 }
                                 @Override
                                 protected int numValues() {
