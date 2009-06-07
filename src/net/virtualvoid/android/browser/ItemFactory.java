@@ -22,9 +22,9 @@ import android.database.sqlite.SQLiteDatabase;
 
 public class ItemFactory {
     static abstract class MappedItemList<T> implements ItemList{
-        private String name;
+        private CharSequence name;
 
-        public MappedItemList(String name) {
+        public MappedItemList(CharSequence name) {
             this.name = name;
         }
 
@@ -35,7 +35,7 @@ public class ItemFactory {
             return map(getOriginal(position));
         }
         @Override
-        public String getName() {
+        public CharSequence getName() {
             return name;
         }
 
@@ -161,47 +161,38 @@ public class ItemFactory {
 
         return fromList("Fields",res);
     }
-    private static boolean isProperty(Method m){
-        return !isStatic(m) // not static
-                && (m.getName().startsWith("get") || m.getName().startsWith("is"))
-                && m.getParameterTypes().length == 0;
-    }
     private static boolean isStatic(Member m){
         return (m.getModifiers()&Modifier.STATIC) != 0;
     }
-    private static ArrayList<Method> propertyMethodsOf(final Class<?> clazz){
-        Method[] ms = clazz.getMethods();
-        ArrayList<Method> res = new ArrayList<Method>(ms.length);
-        for(Method m:ms)
-            if(isProperty(m))
-                res.add(m);
-        return res;
-    }
-    private static ItemList propertiesOf(final Object o){
-        return new MappedListItemList<Method>("Properties",propertyMethodsOf(o.getClass())){
+    private static Item materialize(final MetaItem metaItem,final Object o){
+        return new Item(){
             @Override
-            protected Item map(final Method m) {
-                return new Item(){
-                    {
-                        m.setAccessible(true);
-                    }
-                    @Override
-                    public Object get(){
-                        try {
-                            return m.invoke(o);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                    @Override
-                    public String getName() {
-                        return m.getName();
-                    }
-                    @Override
-                    public Class<?> getReturnType() {
-                        return m.getReturnType();
-                    }
-                };
+            public Object get() {
+                return metaItem.get(o);
+            }
+            @Override
+            public CharSequence getName() {
+                return metaItem.getName();
+            }
+            @Override
+            public Class<?> getReturnType() {
+                return metaItem.getReturnType();
+            }
+        };
+    }
+    private static ItemList materialize(final MetaItemList metaList,final Object o){
+        return new ItemList(){
+            @Override
+            public Item get(int position) {
+                return materialize(metaList.get(position), o);
+            }
+            @Override
+            public CharSequence getName() {
+                return metaList.getName();
+            }
+            @Override
+            public int size() {
+                return metaList.size();
             }
         };
     }
@@ -499,44 +490,60 @@ public class ItemFactory {
                         }
                     });
     }
-    static abstract class MappedArray extends MappedListItemList<Method>{
+    static abstract class MappedArray implements ItemLists{
+        List<MetaItemList> metaLists;
         public MappedArray(Class<?> clazz) {
-            super("Map with", propertyMethodsOf(clazz));
+            this.metaLists = MetaItemFactory.metaItemsFor(clazz);
         }
         @Override
-        protected Item map(final Method m) {
-            return new Item(){
+        public int size() {
+            return metaLists.size();
+        }
+        @Override
+        public ItemList get(int pos){
+            final MetaItemList metaList = metaLists.get(pos);
+            return new ItemList(){
                 @Override
-                public Object get() {
-                    return new MappedArray(m.getReturnType()){
+                public CharSequence getName() {
+                    return "Map with "+metaList.getName();
+                }
+                @Override
+                public int size() {
+                    return metaList.size();
+                }
+                public Item get(int position) {
+                    final MetaItem item = metaList.get(position);
+                    return new Item(){
                         @Override
-                        protected Object mappedValueAt(int position) {
-                            try {
-                                return m.invoke(MappedArray.this.mappedValueAt(position));
-                            } catch (Exception e) {
-                                throw new Error(e);
-                            }
+                        public Object get() {
+                            return new MappedArray(item.getReturnType()){
+                                @Override
+                                protected Object mappedValueAt(int position) {
+                                    return item.get(MappedArray.this.mappedValueAt(position));
+                                }
+                                @Override
+                                protected int numValues() {
+                                    return MappedArray.this.numValues();
+                                }
+                                @Override
+                                protected Object originalValueAt(int pos) {
+                                    return MappedArray.this.originalValueAt(pos);
+                                }
+                            };
                         }
                         @Override
-                        protected int numValues() {
-                            return MappedArray.this.numValues();
+                        public CharSequence getName() {
+                            return item.getName();
                         }
                         @Override
-                        protected Object originalValueAt(int pos) {
-                            return MappedArray.this.originalValueAt(pos);
+                        public Class<?> getReturnType() {
+                            return MappedArray.class;
                         }
                     };
                 }
-                @Override
-                public CharSequence getName() {
-                    return m.getName();
-                }
-                @Override
-                public Class<?> getReturnType() {
-                    return MappedArray.class;
-                }
             };
         }
+
         protected abstract Object mappedValueAt(int pos);
         protected abstract Object originalValueAt(int pos);
         protected abstract int numValues();
@@ -577,7 +584,7 @@ public class ItemFactory {
             return res;
         }
     }
-    private static ItemList mappedArray(final Object o){
+    private static ItemLists mappedArray(final Object o){
         if (o instanceof Object[]){
             final Object[] array = (Object[]) o;
             return new MappedArray(array.getClass().getComponentType()){
@@ -632,15 +639,23 @@ public class ItemFactory {
             add(res,elementsOfIterable((Iterable<?>) o));
         else if (o instanceof PackageManager)
             add(res,packagesFromPM((PackageManager) o));
-        else if (o instanceof ItemList)
-            add(res,(ItemList) o);
         else if (o instanceof File && ((File)o).getName().endsWith(".db"))
             add(res,tablesOfDb(((File) o).getPath()));
         else if (o instanceof Cursor)
             add(res,resultsOfQuery((Cursor) o));
 
+        if (o instanceof ItemList)
+            add(res,(ItemList) o);
+        if (o instanceof ItemLists){
+            ItemLists lists = (ItemLists) o;
+            for (int i=0;i<lists.size();i++)
+                add(res,lists.get(i));
+        }
+
         add(res,fieldsOf(o));
-        add(res,propertiesOf(o));
+
+        for (MetaItemList meta:MetaItemFactory.metaItemsFor(o.getClass()))
+            add(res,materialize(meta,o));
 
         return res;
     }
