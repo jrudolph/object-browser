@@ -3,9 +3,7 @@ package net.virtualvoid.android.browser;
 import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,23 +71,6 @@ public class ItemFactory {
             return items[arg0];
         }
     }
-
-    private static ItemList fromList(final String name,final List<Item> items){
-        return new ItemList(){
-            @Override
-            public Item get(int position) {
-                return items.get(position);
-            }
-            @Override
-            public String getName() {
-                return name;
-            }
-            @Override
-            public int size() {
-                return items.size();
-            }
-        };
-    }
     private static ItemList fromArray(final String name,final Item...is){
         return new ItemList(){
             @Override
@@ -127,43 +108,6 @@ public class ItemFactory {
         };
     }
 
-    private static ItemList fieldsOf(final Object o){
-        ArrayList<Item> res = new ArrayList<Item>();
-
-        Class<?> cur = o.getClass();
-
-        while(cur != null){
-            for (final Field f:cur.getDeclaredFields())
-                if (!isStatic(f))
-                    res.add(new Item(){
-                        {
-                            f.setAccessible(true);
-                        }
-                        @Override
-                        public Object get(){
-                            try {
-                                return f.get(o);
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                        @Override
-                        public String getName() {
-                            return f.getName();
-                        }
-                        @Override
-                        public Class<?> getReturnType() {
-                            return f.getType();
-                        }
-                    });
-            cur = cur.getSuperclass();
-        }
-
-        return fromList("Fields",res);
-    }
-    private static boolean isStatic(Member m){
-        return (m.getModifiers()&Modifier.STATIC) != 0;
-    }
     private static Item materialize(final MetaItem metaItem,final Object o){
         return new Item(){
             @Override
@@ -651,8 +595,6 @@ public class ItemFactory {
             for (int i=0;i<lists.size();i++)
                 add(res,lists.get(i));
         }
-
-        add(res,fieldsOf(o));
 
         for (MetaItemList meta:MetaItemFactory.metaItemsFor(o.getClass()))
             add(res,materialize(meta,o));

@@ -1,5 +1,6 @@
 package net.virtualvoid.android.browser;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -30,6 +31,22 @@ public abstract class MetaItemFactory {
         public int size() {
             return list.size();
         }
+    }
+    private static MetaItemList fromList(final String name,final List<MetaItem> items){
+        return new MetaItemList(){
+            @Override
+            public MetaItem get(int position) {
+                return items.get(position);
+            }
+            @Override
+            public String getName() {
+                return name;
+            }
+            @Override
+            public int size() {
+                return items.size();
+            }
+        };
     }
 
     private static boolean isProperty(Method m){
@@ -76,6 +93,38 @@ public abstract class MetaItemFactory {
             }
         };
     }
+    private static MetaItemList fieldsOf(Class<?> cur){
+        ArrayList<MetaItem> res = new ArrayList<MetaItem>();
+
+        while(cur != null){
+            for (final Field f:cur.getDeclaredFields())
+                if (!isStatic(f))
+                    res.add(new MetaItem(){
+                        {
+                            f.setAccessible(true);
+                        }
+                        @Override
+                        public Object get(Object o){
+                            try {
+                                return f.get(o);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        @Override
+                        public String getName() {
+                            return f.getName();
+                        }
+                        @Override
+                        public Class<?> getReturnType() {
+                            return f.getType();
+                        }
+                    });
+            cur = cur.getSuperclass();
+        }
+
+        return fromList("Fields",res);
+    }
     public static ArrayList<MetaItemList> metaItemsFor(Class<?> clazz){
         ArrayList<MetaItemList> res = new ArrayList<MetaItemList>(){
             private static final long serialVersionUID = 1L;
@@ -89,6 +138,7 @@ public abstract class MetaItemFactory {
             }
         };
 
+        res.add(fieldsOf(clazz));
         res.add(propertiesOf(clazz));
 
         return res;
