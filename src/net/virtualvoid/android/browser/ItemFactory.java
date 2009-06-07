@@ -498,9 +498,9 @@ public class ItemFactory {
             int length = Math.min(num,MAX_ARRAY_ELEMENTS);
             for (int i = 0;i<length;i++){
                 if (buffer.length() != 0)
-                    buffer.append('\n');
+                    buffer.append("<br/>");
                 buffer.append(ItemFactory.toString(originalValueAt(i)))
-                    .append(':')
+                    .append(" → ")
                     .append(ItemFactory.toString(mappedValueAt(i)));
             }
             int moreValues = num - length;
