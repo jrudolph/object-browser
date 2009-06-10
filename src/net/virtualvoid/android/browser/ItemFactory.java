@@ -678,7 +678,7 @@ public class ItemFactory {
                 return format(text.value(),o);
             else if (clazz.isArray())
                 return arrayToString(o);
-            else if (o instanceof String)
+            else if (o instanceof String && Settings.quoteStrings.get())
                 return "\""+o+"\"";
             else
                 return String.valueOf(o);
