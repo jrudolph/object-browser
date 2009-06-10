@@ -198,8 +198,6 @@ public class ObjectBrowserView extends ExpandableListActivity {
             textView.setVisibility(visibility(!(value instanceof Drawable)));
             imageView.setVisibility(visibility(value instanceof Drawable));
 
-            textView.setTextSize(textView.getText().length() > 20 ? 12 : 18);
-
             return convertView;
         }
         @Override
