@@ -436,16 +436,49 @@ public class ItemFactory {
     }
     static abstract class MappedArray implements ItemLists{
         List<MetaItemList> metaLists;
+        Class<?> currentReturnType;
         public MappedArray(Class<?> clazz) {
             this.metaLists = MetaItemFactory.metaItemsFor(clazz);
+            this.currentReturnType = clazz;
         }
         @Override
         public int size() {
-            return metaLists.size();
+            return metaLists.size() + 1;
         }
         @Override
         public ItemList get(int pos){
-            final MetaItemList metaList = metaLists.get(pos);
+            if (pos == 0)
+                return new ItemList(){
+                    @Override
+                    public CharSequence getName() {
+                        return "Current Mapping";
+                    }
+                    @Override
+                    public Item get(int pos) {
+                        final Object orig = originalValueAt(pos);
+                        final Object mapped = mappedValueAt(pos);
+                        return new Item(){
+                            @Override
+                            public Object get() {
+                                return mapped;
+                            }
+                            @Override
+                            public CharSequence getName() {
+                                return ItemFactory.toString(orig);
+                            }
+                            @Override
+                            public Class<?> getReturnType() {
+                                return currentReturnType;
+                            }
+                        };
+                    }
+                    @Override
+                    public int size() {
+                        return numValues();
+                    }
+                };
+
+            final MetaItemList metaList = metaLists.get(pos-1);
             return new ItemList(){
                 @Override
                 public CharSequence getName() {
