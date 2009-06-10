@@ -678,6 +678,8 @@ public class ItemFactory {
                 return format(text.value(),o);
             else if (clazz.isArray())
                 return arrayToString(o);
+            else if (o instanceof String)
+                return "\""+o+"\"";
             else
                 return String.valueOf(o);
         }
