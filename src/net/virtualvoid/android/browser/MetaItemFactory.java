@@ -19,6 +19,7 @@
 
 package net.virtualvoid.android.browser;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -64,6 +65,22 @@ public abstract class MetaItemFactory {
             @Override
             public int size() {
                 return items.size();
+            }
+        };
+    }
+    private static MetaItemList fromItems(final String name,final MetaItem... items){
+        return new MetaItemList(){
+            @Override
+            public MetaItem get(int position) {
+                return items[position];
+            }
+            @Override
+            public String getName() {
+                return name;
+            }
+            @Override
+            public int size() {
+                return items.length;
             }
         };
     }
@@ -144,6 +161,38 @@ public abstract class MetaItemFactory {
 
         return fromList("Fields",res);
     }
+
+    private static MetaItemList arrayInformation(final Class<?> clazz){
+        return fromItems("Array information"
+                ,new MetaItem(){
+                    @Override
+                    public Object get(Object o) {
+                        return Array.getLength(o);
+                    }
+                    @Override
+                    public CharSequence getName() {
+                        return "Length";
+                    }
+                    @Override
+                    public Class<?> getReturnType() {
+                        return Integer.class;
+                    }
+                }
+                ,new MetaItem(){
+                    @Override
+                    public Object get(Object o) {
+                        return o.getClass().getComponentType();
+                    }
+                    @Override
+                    public CharSequence getName() {
+                        return "Component Type";
+                    }
+                    @Override
+                    public Class<?> getReturnType() {
+                        return Class.class;
+                    }
+                });
+    }
     public static ArrayList<MetaItemList> metaItemsFor(Class<?> clazz){
         ArrayList<MetaItemList> res = new ArrayList<MetaItemList>(){
             private static final long serialVersionUID = 1L;
@@ -159,6 +208,9 @@ public abstract class MetaItemFactory {
 
         res.add(fieldsOf(clazz));
         res.add(propertiesOf(clazz));
+
+        if (clazz.isArray())
+            res.add(arrayInformation(clazz));
 
         return res;
     }
