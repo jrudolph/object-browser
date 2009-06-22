@@ -643,7 +643,13 @@ public class ItemFactory {
 
         if (o.getClass().isArray()){
             add(res,elementsOfArray(o));
-            add(res,fromArray("Actions", single("Mapped array",mappedArray(o))));
+
+            Item[] actions = o.getClass().getComponentType().isPrimitive()?
+                    new Item[]{single("Mapped array",mappedArray(o))} :
+                    new Item[]{single("Mapped array",mappedArray(o))
+                              ,single("Narrowed",Reflection.narrow((Object[]) o))};
+
+            add(res,fromArray("Actions",actions));
         }
         else if (o instanceof Map)
             add(res,elementsOfMap((Map<?, ?>) o));
