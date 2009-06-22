@@ -606,6 +606,61 @@ public class ItemFactory {
                 }
             };
         }
+        private void putIntoMap(Map<Object,List<Object>> map,Object value,Object key){
+            List<Object> os = map.get(value);
+            if (os == null){
+                os = new ArrayList<Object>();
+                map.put(value,os);
+            }
+            os.add(key);
+        }
+        public MappedArray getGroupedByValue(){
+            final Map<Object,List<Object>> res = new HashMap<Object, List<Object>>();
+
+            int len = numValues();
+            for (int i=0;i<len;i++){
+                Object key = originalValueAt(i);
+                Object value = mappedValueAt(i);
+
+                if (value == null)
+                    continue;
+
+                if (currentReturnType.isArray()){
+                    int num = Array.getLength(value);
+                    for (int j=0;j<num;j++)
+                        putIntoMap(res,Array.get(value,j),key);
+                }
+                else
+                    putIntoMap(res,value,key);
+            }
+
+            final Object[]values = new Object[res.size()];
+            int i=0;
+            for (Object v:res.keySet()){
+                values[i] = v;
+                i++;
+            }
+
+            return new MappedArray(Array.newInstance(originalClass(),0).getClass()){
+                @Override
+                protected Object mappedValueAt(int pos) {
+                    List<Object> list = res.get(values[pos]);
+                    return list.toArray((Object[])Array.newInstance(Reflection.boxed(MappedArray.this.originalClass()), list.size()));
+                }
+                @Override
+                protected int numValues() {
+                    return values.length;
+                }
+                @Override
+                protected Class<?> originalClass() {
+                    return MappedArray.this.currentReturnType;
+                }
+                @Override
+                protected Object originalValueAt(int pos) {
+                    return values[pos];
+                }
+            };
+        }
     }
     private static ItemLists mappedArray(final Object o){
         if (o instanceof Object[]){

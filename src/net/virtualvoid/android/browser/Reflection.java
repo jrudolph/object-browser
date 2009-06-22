@@ -67,4 +67,25 @@ public class Reflection {
         else
             return oa;
     }
+    public static Class<?> boxed(Class<?> cl){
+        if (!cl.isPrimitive())
+            return cl;
+        else
+            if (cl == Integer.TYPE)
+                return Integer.class;
+            else if (cl == Float.TYPE)
+                return Float.class;
+            else if (cl == Boolean.TYPE)
+                return Boolean.class;
+            else if (cl == Short.TYPE)
+                return Short.class;
+            else if (cl == Double.TYPE)
+                return Double.class;
+            else if (cl == Character.TYPE)
+                return Character.class;
+            else if (cl == Byte.TYPE)
+                return Byte.class;
+            else
+                throw new RuntimeException("Missing boxed type for primitive type "+cl);
+    }
 }
