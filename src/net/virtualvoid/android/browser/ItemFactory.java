@@ -526,6 +526,10 @@ public class ItemFactory {
                                 protected Object originalValueAt(int pos) {
                                     return MappedArray.this.originalValueAt(pos);
                                 }
+                                @Override
+                                protected Class<?> originalClass() {
+                                    return MappedArray.this.originalClass();
+                                }
                             };
                         }
                         @Override
@@ -544,6 +548,7 @@ public class ItemFactory {
         protected abstract Object mappedValueAt(int pos);
         protected abstract Object originalValueAt(int pos);
         protected abstract int numValues();
+        protected abstract Class<?> originalClass();
         @Override
         public String toString() {
             StringBuffer buffer = new StringBuffer();
@@ -580,6 +585,27 @@ public class ItemFactory {
                 res.put(originalValueAt(i),mappedValueAt(i));
             return res;
         }
+        public MappedArray getSwapped(){
+            final MappedArray outer = this;
+            return new MappedArray(originalClass()){
+                @Override
+                protected Object mappedValueAt(int pos) {
+                    return outer.originalValueAt(pos);
+                }
+                @Override
+                protected int numValues() {
+                    return outer.numValues();
+                }
+                @Override
+                protected Object originalValueAt(int pos) {
+                    return outer.mappedValueAt(pos);
+                }
+                @Override
+                protected Class<?> originalClass() {
+                    return outer.currentReturnType;
+                }
+            };
+        }
     }
     private static ItemLists mappedArray(final Object o){
         if (o instanceof Object[]){
@@ -596,6 +622,10 @@ public class ItemFactory {
                 @Override
                 protected Object originalValueAt(int pos) {
                     return array[pos];
+                }
+                @Override
+                protected Class<?> originalClass() {
+                    return array.getClass().getComponentType();
                 }
             };
         }
@@ -614,6 +644,10 @@ public class ItemFactory {
                 protected Object originalValueAt(int pos) {
                     return list.get(pos);
                 }
+                @Override
+                protected Class<?> originalClass() {
+                    return Object.class;
+                }
             };
         }
         else
@@ -629,6 +663,10 @@ public class ItemFactory {
                 @Override
                 protected Object originalValueAt(int pos) {
                     return Array.get(o, pos);
+                }
+                @Override
+                protected Class<?> originalClass() {
+                    return o.getClass().getComponentType();
                 }
             };
     }
