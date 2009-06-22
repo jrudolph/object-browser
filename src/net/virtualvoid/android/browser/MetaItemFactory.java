@@ -143,7 +143,12 @@ public abstract class MetaItemFactory {
                         public Object get(Object o){
                             try {
                                 return f.get(o);
-                            } catch (Exception e) {
+                            } catch (IllegalArgumentException e){
+                                if (e.getMessage().equals("object is not an instance of the class"))
+                                    throw new RuntimeException(o+" is not an instance of "+f.getDeclaringClass(),e);
+                                else
+                                    throw e;
+                            } catch (IllegalAccessException e) {
                                 throw new RuntimeException(e);
                             }
                         }
