@@ -69,9 +69,21 @@ public class Home {
                         public Class<?> getReturnType() {
                             return Drawable.class;
                         }
+                        @Override
+                        public String getPath() {
+                            return name;
+                        }
                     };
                 } catch (Exception e) {
                     throw new RuntimeException(e);
+                }
+            }
+            @Override
+            public Item byPathSegment(String path) {
+                try {
+                    return map(android.R.drawable.class.getField(path));
+                } catch (Exception e) {
+                    return null;
                 }
             }
         };

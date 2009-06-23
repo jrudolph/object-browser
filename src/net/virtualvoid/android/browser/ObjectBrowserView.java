@@ -85,7 +85,7 @@ public class ObjectBrowserView extends ExpandableListActivity {
         ExpandableListView list = getExpandableListView();
 
     	items.clear();
-    	items.addAll(ItemFactory.itemsFor(current));
+    	items.addAll(ItemFactory.itemsFor(getApp().getHome(),item));
 
     	myAdapter.notifyDataSetInvalidated();
 
@@ -166,7 +166,8 @@ public class ObjectBrowserView extends ExpandableListActivity {
         long pos = ((ExpandableListContextMenuInfo)item.getMenuInfo()).packedPosition;
         switch(item.getItemId()){
         case ITEM_LIST:
-            setObject(getApp().switchTo(myAdapter.getGroup(ExpandableListView.getPackedPositionGroup(pos)),pos));
+            ItemList itemList = (ItemList) myAdapter.getGroup(ExpandableListView.getPackedPositionGroup(pos));
+            setObject(getApp().switchTo(itemList,itemList.getName().toString(),pos));
             return true;
         }
         return false;

@@ -31,9 +31,11 @@ import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.virtualvoid.android.browser.ObjectBrowser.HistoryItem;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -55,7 +57,29 @@ public class ItemFactory {
         public CharSequence getName() {
             return name;
         }
-
+        /*@Override
+        public Item byPathSegment(String str) {
+            try{
+                return map(getOriginal(Integer.valueOf(str)));
+            } catch(NumberFormatException e){
+                return null;
+            }
+        }*/
+    }
+    static abstract class MappedRAItemList<T> extends MappedItemList<T>{
+        private RA<T> list;
+        public MappedRAItemList(CharSequence name,RA<T> list){
+            super(name);
+            this.list = list;
+        }
+        @Override
+        public int size() {
+            return list.size();
+        }
+        @Override
+        protected T getOriginal(int pos) {
+            return list.get(pos);
+        }
     }
     static abstract class MappedListItemList<T> extends MappedItemList<T>{
         private List<T> items;
@@ -90,19 +114,24 @@ public class ItemFactory {
             return items[arg0];
         }
     }
+    private static Item findByPath(ItemList list,String path){
+        int len = list.size();
+        for (int i=0;i<len;i++) {
+            Item item = list.get(i);
+            if (item.getPath().equals(path))
+                return item;
+        }
+        return null;
+    }
     private static ItemList fromArray(final String name,final Item...is){
-        return new ItemList(){
+        return new MappedArrayItemList<Item>(name,is){
             @Override
-            public Item get(int position) {
-                return is[position];
+            protected Item map(Item item) {
+                return item;
             }
             @Override
-            public CharSequence getName() {
-                return name;
-            }
-            @Override
-            public int size() {
-                return is.length;
+            public Item byPathSegment(String str) {
+                return findByPath(this, str);
             }
         };
     }
@@ -124,10 +153,16 @@ public class ItemFactory {
             public int size() {
                 return list1.size()+list2.size();
             }
+            @Override
+            public Item byPathSegment(String str) {
+                Item i = list1.byPathSegment(str);
+                return i != null ? i : list2.byPathSegment(str);
+            }
         };
     }
 
     private static Item materialize(final MetaItem metaItem,final Object o){
+        assert metaItem != null;
         return new Item(){
             @Override
             public Object get() {
@@ -141,21 +176,22 @@ public class ItemFactory {
             public Class<?> getReturnType() {
                 return metaItem.getReturnType();
             }
+            @Override
+            public String getPath() {
+                return metaItem.getPath();
+            }
         };
     }
     private static ItemList materialize(final MetaItemList metaList,final Object o){
-        return new ItemList(){
+        return new MappedRAItemList<MetaItem>(metaList.getName(),metaList){
             @Override
-            public Item get(int position) {
-                return materialize(metaList.get(position), o);
+            protected Item map(MetaItem arg0) {
+                return materialize(arg0, o);
             }
             @Override
-            public CharSequence getName() {
-                return metaList.getName();
-            }
-            @Override
-            public int size() {
-                return metaList.size();
+            public Item byPathSegment(String path) {
+                MetaItem meta = metaList.byPathSegment(path);
+                return meta != null ? map(meta) : null;
             }
         };
     }
@@ -172,9 +208,13 @@ public class ItemFactory {
         public Item get(int position) {
             throw new NoSuchElementException("no such position "+position);
         }
+        @Override
+        public Item byPathSegment(String str) {
+            return null;
+        }
     };
-    private static ItemList singleton(final String name,final Object o){
-        final Item item = single(name,o);
+    private static ItemList singleton(final String name,final String path,final Object o){
+        final Item item = single(name,path,o);
         return o == null ? emptyList : new ItemList(){
             @Override
             public Item get(int position) {
@@ -191,9 +231,13 @@ public class ItemFactory {
             public int size() {
                 return 1;
             }
+            @Override
+            public Item byPathSegment(String str) {
+                return path.equals(str) ? item : null;
+            }
         };
     }
-    private static Item single(final String name,final Object o){
+    private static Item single(final String name,final String path,final Object o){
         return new Item(){
             @Override
             public Object get() {
@@ -206,6 +250,10 @@ public class ItemFactory {
             @Override
             public Class<?> getReturnType() {
                 return o.getClass();
+            }
+            @Override
+            public String getPath() {
+                return path;
             }
         };
     }
@@ -231,6 +279,10 @@ public class ItemFactory {
                             Object val = get();
                             return val!=null ? val.getClass() : array.getClass().getComponentType();
                         }
+                        @Override
+                        public String getPath() {
+                            return Integer.toString(index);
+                        }
                     };
                     items[index] = item;
                 }
@@ -244,10 +296,18 @@ public class ItemFactory {
             public int size() {
                 return len;
             }
+            @Override
+            public Item byPathSegment(String str) {
+                try{
+                    return get(Integer.valueOf(str));
+                } catch(NumberFormatException e){
+                    return null;
+                }
+            }
         };
     }
     private static ItemList elementsOfMap(final Map<?,?> map){
-        ArrayList<Object> keys = new ArrayList<Object>();
+        final ArrayList<Object> keys = new ArrayList<Object>();
         for (Object o:map.keySet())
             keys.add(o);
         return new MappedListItemList<Object>("Values",keys){
@@ -267,7 +327,25 @@ public class ItemFactory {
                         Object val = get();
                         return val!=null ? val.getClass() : Object.class;
                     }
+                    @Override
+                    public String getPath() {
+                        return ItemFactory.toString(key);
+                    }
                 };
+            }
+            @Override
+            public Item byPathSegment(String str) {
+                Object key = map.get(str);
+                if (key != null)
+                    return map(key);
+                else {
+                    for (Object k:keys){
+                        Item i = map(k);
+                        if (i.getPath().equals(str))
+                            return i;
+                    }
+                    return null;
+                }
             }
         };
     }
@@ -285,7 +363,7 @@ public class ItemFactory {
                 break;
         final int numElements = num;
         return join("Elements"
-                   ,singleton("Size",num >= MAX_ELEMENTS?">= "+MAX_ELEMENTS:num)
+                   ,singleton("Size","size",num >= MAX_ELEMENTS?">= "+MAX_ELEMENTS:num)
                    ,new ItemList(){
                         @Override
                         public Item get(final int position) {
@@ -303,6 +381,10 @@ public class ItemFactory {
                                     Object val = get();
                                     return val!=null ? val.getClass() : Object.class;
                                 }
+                                @Override
+                                public String getPath() {
+                                    return getName();
+                                }
                             };
                         }
                         @Override
@@ -313,12 +395,20 @@ public class ItemFactory {
                         public int size() {
                             return numElements;
                         }
+                        @Override
+                        public Item byPathSegment(String str) {
+                            try {
+                                return get(Integer.valueOf(str));
+                            } catch (NumberFormatException nfe){
+                                return null;
+                            }
+                        }
                    });
     }
     private static ItemList contentsOfDirectory(final File dir){
         return join(
                 "Contents",
-                singleton("..",dir.getParentFile())
+                singleton("..","parent",dir.getParentFile())
                 ,new MappedArrayItemList<File>("Contents",dir.listFiles()){
                     @Override
                     protected Item map(final File f) {
@@ -335,7 +425,16 @@ public class ItemFactory {
                             public Class<?> getReturnType() {
                                 return File.class;
                             }
+                            @Override
+                            public String getPath() {
+                                return f.getName();
+                            }
                         };
+                    }
+                    @Override
+                    public Item byPathSegment(String str) {
+                        File f = new File(dir.getAbsolutePath()+File.separator+str);
+                        return f.exists() ? map(f) : null;
                     }
                 });
     }
@@ -363,11 +462,19 @@ public class ItemFactory {
                     public Class<?> getReturnType() {
                         return Cursor.class;
                     }
+                    @Override
+                    public String getPath() {
+                        return table;
+                    }
                 };
             }
             @Override
             public int size() {
                 return cursor.getCount();
+            }
+            @Override
+            public Item byPathSegment(String str) {
+                return findByPath(this, str);
             }
         };
     }
@@ -389,6 +496,10 @@ public class ItemFactory {
                     public Class<?> getReturnType() {
                         return Map.class;
                     }
+                    @Override
+                    public String getPath() {
+                        return Integer.toString(position);
+                    }
                 };
             }
             @Override
@@ -398,6 +509,14 @@ public class ItemFactory {
             @Override
             public int size() {
                 return cursor.getCount();
+            }
+            @Override
+            public Item byPathSegment(String str) {
+                try{
+                    return get(Integer.valueOf(str));
+                } catch(NumberFormatException nfe){
+                    return null;
+                }
             }
         };
     }
@@ -418,40 +537,30 @@ public class ItemFactory {
                     public Class<?> getReturnType() {
                         return ApplicationInfo.class;
                     }
+                    @Override
+                    public String getPath() {
+                        return info.packageName.replace('.', '#');
+                    }
                 };
+            }
+            @Override
+            public Item byPathSegment(String path) {
+                try {
+                    String packageName = path.replaceAll("\\#", ".");
+                    PackageInfo pi = pm.getPackageInfo(packageName, 0xffffffff);
+                    return pi != null ? map(pi) : null;
+                } catch (NameNotFoundException e) {
+                    return null;
+                }
             }
         };
     }
-    private static ItemList informationFor(final Object o){
+    private static ItemList informationFor(Home home,final HistoryItem o){
         return fromArray("This"
-                    ,new Item(){
-                        @Override
-                        public Object get() {
-                            return o.toString();
-                        }
-                        @Override
-                        public CharSequence getName() {
-                            return "String representation";
-                        }
-                        @Override
-                        public Class<?> getReturnType() {
-                            return String.class;
-                        }
-                    }
-                    ,new Item(){
-                        @Override
-                        public Object get() {
-                            return o.getClass();
-                        }
-                        @Override
-                        public CharSequence getName() {
-                            return "Class";
-                        }
-                        @Override
-                        public Class<?> getReturnType() {
-                            return Class.class;
-                        }
-                    });
+                    ,single("String representation","toString",o.toString())
+                    ,single("Class","class",o.getClass())
+                    ,single("Path","path",o.path)
+                    ,single("Self by path","self",fromPath(home, o.path)));
     }
     static abstract class MappedArray implements ItemLists{
         List<MetaItemList> metaLists;
@@ -482,18 +591,26 @@ public class ItemFactory {
                                 return mapped;
                             }
                             @Override
-                            public CharSequence getName() {
+                            public String getName() {
                                 return ItemFactory.toString(orig);
                             }
                             @Override
                             public Class<?> getReturnType() {
                                 return currentReturnType;
                             }
+                            @Override
+                            public String getPath() {
+                                return getName();
+                            }
                         };
                     }
                     @Override
                     public int size() {
                         return numValues();
+                    }
+                    @Override
+                    public Item byPathSegment(String str) {
+                        return findByPath(this, str);
                     }
                 };
 
@@ -509,6 +626,9 @@ public class ItemFactory {
                 }
                 public Item get(int position) {
                     final MetaItem item = metaList.get(position);
+                    return fromMetaItem(item);
+                }
+                private Item fromMetaItem(final MetaItem item) {
                     return new Item(){
                         @Override
                         public Object get() {
@@ -540,7 +660,21 @@ public class ItemFactory {
                         public Class<?> getReturnType() {
                             return MappedArray.class;
                         }
+                        @Override
+                        public String getPath() {
+                            return "*"+item.getPath();
+                        }
                     };
+                }
+                @Override
+                public Item byPathSegment(String str) {
+                    if (!str.startsWith("*"))
+                        return null;
+
+                    str = str.substring(1);
+
+                    MetaItem i = metaList.byPathSegment(str);
+                    return i != null ? fromMetaItem(i) : null;
                 }
             };
         }
@@ -729,18 +863,22 @@ public class ItemFactory {
         if (il.size() > 0)
             list.add(il);
     }
-    public static ArrayList<ItemList> itemsFor(Object o){
+    public static ArrayList<ItemList> itemsFor(Home home,HistoryItem it){
         ArrayList<ItemList> res = new ArrayList<ItemList>();
+        add(res,informationFor(home,it));
 
-        add(res,informationFor(o));
+        itemsFor(it.object,res);
 
+        return res;
+    }
+    public static ArrayList<ItemList> itemsFor(Object o,ArrayList<ItemList> res){
         if (o.getClass().isArray()){
             add(res,elementsOfArray(o));
 
             Item[] actions = o.getClass().getComponentType().isPrimitive()?
-                    new Item[]{single("Mapped array",mappedArray(o))} :
-                    new Item[]{single("Mapped array",mappedArray(o))
-                              ,single("Narrowed",Reflection.narrow((Object[]) o))};
+                    new Item[]{single("Mapped array","mapped",mappedArray(o))} :
+                    new Item[]{single("Mapped array","mapped",mappedArray(o))
+                              ,single("Narrowed","narrow",Reflection.narrow((Object[]) o))};
 
             add(res,fromArray("Actions",actions));
         }
@@ -768,7 +906,35 @@ public class ItemFactory {
         for (MetaItemList meta:MetaItemFactory.metaItemsFor(o.getClass()))
             add(res,materialize(meta,o));
 
+        add(res,elementsOfIterable(res));
+
         return res;
+    }
+    public static Object fromPath(Home home,String path){
+        String[] els = path.split("\\.");
+
+        Object o = null;
+outer:  for (String segment:els){
+            if ("Home".equals(segment))
+                o = home;
+            else {
+                for (ItemList list:itemsFor(o,new ArrayList<ItemList>(10))){
+                    // allow navigation into an ItemList
+                    if (list.getName().equals(segment)){
+                        o = list;
+                        continue outer;
+                    }
+
+                    Item item = list.byPathSegment(segment);
+                    if (item != null){
+                        o = item.get();
+                        continue outer;
+                    }
+                }
+                throw new RuntimeException("In path "+path+" couldn't find object for "+segment);
+            }
+        }
+        return o;
     }
 
     private static String capitalized(String str){

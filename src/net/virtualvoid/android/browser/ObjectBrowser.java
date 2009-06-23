@@ -33,13 +33,15 @@ public class ObjectBrowser extends Application{
     static class HistoryItem{
         Object object;
         long listPosition;
-        public HistoryItem(Object object) {
+        String path;
+        public HistoryItem(Object object,String path) {
             super();
             this.object = object;
+            this.path = path;
         }
     }
-    private static HistoryItem history(Object object){
-        return new HistoryItem(object);
+    private static HistoryItem history(Object object,String path){
+        return new HistoryItem(object,path);
     }
 
     private final static int MAX_HISTORY = 25;
@@ -47,7 +49,7 @@ public class ObjectBrowser extends Application{
     @Override
     public void onCreate() {
         super.onCreate();
-        switchTo(mycastle,0);
+        switchTo(mycastle,"Home",0);
     }
 
     Home getHome(){
@@ -66,11 +68,19 @@ public class ObjectBrowser extends Application{
         return history.size() > 1;
     }
     HistoryItem switchTo(Object o,long pos){
+        return switchTo(o, "",pos);
+    }
+    HistoryItem switchTo(Object o,String path,long pos){
+        String pathPrefix;
+
         if (!history.isEmpty()){
             getCurrent().listPosition = pos;
+            pathPrefix = getCurrent().path + ".";
         }
+        else
+            pathPrefix = "";
 
-        history.add(history(o));
+        history.add(history(o,pathPrefix + path));
 
         while (history.size() > MAX_HISTORY)
             history.remove(0);
@@ -79,7 +89,7 @@ public class ObjectBrowser extends Application{
     }
     HistoryItem move(Item i,long pos){
         try {
-            return switchTo(i.get(),pos);
+            return switchTo(i.get(),i.getPath(),pos);
         } catch (Exception e) {
             // FAIL more noisily
             e.printStackTrace();

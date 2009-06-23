@@ -23,4 +23,5 @@ public interface Item {
     CharSequence getName();
     Class<?> getReturnType();
     Object get();
+    String getPath();
 }

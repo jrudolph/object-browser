@@ -53,18 +53,17 @@ public abstract class MetaItemFactory {
         }
     }
     private static MetaItemList fromList(final String name,final List<MetaItem> items){
-        return new MetaItemList(){
+        return new MappedListMetaItemList<MetaItem>(name,items){
             @Override
-            public MetaItem get(int position) {
-                return items.get(position);
+            protected MetaItem map(MetaItem arg0) {
+                return arg0;
             }
             @Override
-            public String getName() {
-                return name;
-            }
-            @Override
-            public int size() {
-                return items.size();
+            public MetaItem byPathSegment(String path) {
+                for (MetaItem i:items)
+                    if (i.getPath().equals(path))
+                        return i;
+                return null;
             }
         };
     }
@@ -81,6 +80,13 @@ public abstract class MetaItemFactory {
             @Override
             public int size() {
                 return items.length;
+            }
+            @Override
+            public MetaItem byPathSegment(String path) {
+               for (MetaItem it:items)
+                   if (it.getPath().equals(path))
+                       return it;
+               return null;
             }
         };
     }
@@ -125,7 +131,23 @@ public abstract class MetaItemFactory {
                     public Class<?> getReturnType() {
                         return m.getReturnType();
                     }
+                    @Override
+                    public String getPath() {
+                        return m.getName();
+                    }
                 };
+            }
+            @Override
+            public MetaItem byPathSegment(String arg0) {
+                Method m;
+                try {
+                    m = clazz.getMethod(arg0);
+                    return isProperty(m) ? map(m) : null;
+                } catch (SecurityException e) {
+                    throw new RuntimeException(e);
+                } catch (NoSuchMethodException e) {
+                    return null;
+                }
             }
         };
     }
@@ -160,6 +182,10 @@ public abstract class MetaItemFactory {
                         public Class<?> getReturnType() {
                             return f.getType();
                         }
+                        @Override
+                        public String getPath() {
+                            return f.getName();
+                        }
                     });
             cur = cur.getSuperclass();
         }
@@ -182,6 +208,10 @@ public abstract class MetaItemFactory {
                     public Class<?> getReturnType() {
                         return Integer.class;
                     }
+                    @Override
+                    public String getPath() {
+                        return "length";
+                    }
                 }
                 ,new MetaItem(){
                     @Override
@@ -195,6 +225,10 @@ public abstract class MetaItemFactory {
                     @Override
                     public Class<?> getReturnType() {
                         return Class.class;
+                    }
+                    @Override
+                    public String getPath() {
+                        return "componentType";
                     }
                 });
     }

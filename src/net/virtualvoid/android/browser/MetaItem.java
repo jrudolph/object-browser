@@ -23,4 +23,5 @@ public interface MetaItem {
     CharSequence getName();
     Class<?> getReturnType();
     Object get(Object o);
+    String getPath();
 }
