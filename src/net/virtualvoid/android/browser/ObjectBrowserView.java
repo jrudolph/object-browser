@@ -24,9 +24,12 @@ import java.util.ArrayList;
 import net.virtualvoid.android.browser.ObjectBrowser.HistoryItem;
 import android.app.ExpandableListActivity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.Intent.ShortcutIconResource;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.Spanned;
@@ -50,15 +53,37 @@ import android.widget.ImageView.ScaleType;
 public class ObjectBrowserView extends ExpandableListActivity {
 	private LayoutInflater inflater;
     private Adapter myAdapter;
+    private boolean creatingShortCut;
+
+    private ObjectBrowser state;
 
 	private ObjectBrowser getApp(){
-	    return (ObjectBrowser) getApplication();
+	    return state;
 	}
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        state = new ObjectBrowser(this);
+
+        if (Intent.ACTION_VIEW.equals(getIntent().getAction())){
+            String path = getIntent().getData().getSchemeSpecificPart();
+            try{
+                state.switchTo(ItemFactory.fromPath(state.getHome(), path),path, 0);
+            } catch(Exception e){
+                e.printStackTrace();
+                Toast.makeText(this, "Can't access this element, probably the path is wrong: "+path, Toast.LENGTH_LONG)
+                    .show();
+                finish();
+                return;
+            }
+        }
+        else
+            state.switchTo(state.mycastle,"Home", 0);
+
+        creatingShortCut = Intent.ACTION_CREATE_SHORTCUT.equals(getIntent().getAction());
 
         inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
@@ -69,6 +94,7 @@ public class ObjectBrowserView extends ExpandableListActivity {
 
         setObject(getApp().getCurrent());
     }
+
     private ArrayList<ItemList> items = new ArrayList<ItemList>();
     private final static String TAG = "APIBrowser";
 
@@ -125,15 +151,21 @@ public class ObjectBrowserView extends ExpandableListActivity {
     private final static int HOME = 42;
     private final static int HISTORY = -753;
     private final static int SAVE = 123456;
+    private final static int SHORTCUT = Integer.MIN_VALUE + 1;
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0,HOME,0,"Home").setIcon(android.R.drawable.ic_menu_myplaces);
         menu.add(0,HISTORY,1,"History").setIcon(android.R.drawable.ic_menu_recent_history);
         menu.add(0,SAVE,2,"Save").setIcon(android.R.drawable.ic_menu_save);
+
+        if (creatingShortCut)
+            menu.add(0,SHORTCUT,3,"Create shortcut").setIcon(android.R.drawable.star_big_on);
+
         return true;
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        HistoryItem current = getApp().getCurrent();
         switch(item.getItemId()){
         case HOME:
             setObject(getApp().switchTo(getApp().getHome(),getExpandableListView().getExpandableListPosition(getExpandableListView().getFirstVisiblePosition())));
@@ -142,9 +174,25 @@ public class ObjectBrowserView extends ExpandableListActivity {
             setObject(getApp().switchTo(getApp().history,getExpandableListView().getExpandableListPosition(getExpandableListView().getFirstVisiblePosition())));
             return true;
         case SAVE:
-            getApp().addSaved(getApp().getCurrent().object);
+            getApp().addSaved(current.object);
             Toast.makeText(this, "The current object was saved in your favourites. See Home.getFavourites().", Toast.LENGTH_SHORT)
                  .show();
+            return true;
+        case SHORTCUT:
+            ShortcutIconResource icon = Intent.ShortcutIconResource.fromContext(ObjectBrowserView.this, R.drawable.magnifier);
+
+            Intent intent = new Intent();
+            intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT,
+                    new Intent(
+                            Intent.ACTION_VIEW
+                            ,new Uri.Builder().scheme("obrowse").opaquePart(current.path).build())
+                        );
+            intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, current.path);
+            intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, icon);
+
+            setResult(RESULT_OK, intent);
+            finish();
+
             return true;
         }
         return false;

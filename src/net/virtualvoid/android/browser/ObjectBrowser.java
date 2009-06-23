@@ -22,13 +22,21 @@ package net.virtualvoid.android.browser;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import android.app.Application;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.content.res.Resources;
 
 @Textual("ObjectBrowser{history-depth = #history.size}")
-public class ObjectBrowser extends Application{
+public class ObjectBrowser {
     LinkedList<HistoryItem> history = new LinkedList<HistoryItem>();
     ArrayList<Object> saved = new ArrayList<Object>();
     Home mycastle = new Home(this);
+    private Context ctx;
+
+    public ObjectBrowser(Context ctx) {
+        this.ctx = ctx;
+    }
 
     static class HistoryItem{
         Object object;
@@ -46,10 +54,14 @@ public class ObjectBrowser extends Application{
 
     private final static int MAX_HISTORY = 25;
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        switchTo(mycastle,"Home",0);
+    public Resources getResources(){
+        return ctx.getResources();
+    }
+    public PackageManager getPackageManager(){
+        return ctx.getPackageManager();
+    }
+    public AssetManager getAssets(){
+        return ctx.getAssets();
     }
 
     Home getHome(){
