@@ -24,6 +24,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -556,11 +557,14 @@ public class ItemFactory {
         };
     }
     private static ItemList informationFor(Home home,final HistoryItem o){
-        return fromArray("This"
-                    ,single("String representation","toString",o.toString())
-                    ,single("Class","class",o.getClass())
-                    ,single("Path","path",o.path)
-                    ,single("Self by path","self",fromPath(home, o.path)));
+        List<Item> els = Arrays.asList(single("String representation","toString",o.toString())
+                     ,single("Class","class",o.getClass())
+                     ,single("Path","path",o.path));
+
+        if (Settings.showSelfFromPath.get())
+            els.add(single("Self by path","self",fromPath(home, o.path)));
+
+        return fromArray("This",els.toArray(new Item[els.size()]));
     }
     static abstract class MappedArray implements ItemLists{
         List<MetaItemList> metaLists;
@@ -906,7 +910,8 @@ public class ItemFactory {
         for (MetaItemList meta:MetaItemFactory.metaItemsFor(o.getClass()))
             add(res,materialize(meta,o));
 
-        add(res,elementsOfIterable(res));
+        if (Settings.listItemLists.get())
+            add(res,elementsOfIterable(res));
 
         return res;
     }

@@ -38,4 +38,6 @@ public class Settings {
     }
 
     public static Setting<Boolean> quoteStrings = constant("Quote literal strings",true);
+    public static Setting<Boolean> listItemLists = constant("List ItemLists",false);
+    public static Setting<Boolean> showSelfFromPath = constant("Show self generated from path (for debugging path problems)",false);
 }
