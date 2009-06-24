@@ -26,6 +26,7 @@ import android.app.ExpandableListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Intent.ShortcutIconResource;
+import android.graphics.Color;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
@@ -245,7 +246,14 @@ public class ObjectBrowserView extends ExpandableListActivity {
             TextView textView = (TextView) convertView.findViewById(R.id.value);
             ImageView imageView = (ImageView) convertView.findViewById(R.id.valueDrawable);
 
-            Object value = item.get();
+            Object value;
+            try {
+                value = item.get();
+                convertView.setBackgroundDrawable(null);
+            } catch (Exception e){
+                value = e;
+                convertView.setBackgroundColor(Color.rgb(113,0,0));
+            }
             if (value instanceof Drawable){
                 imageView.setImageDrawable((Drawable) value);
                 imageView.setScaleType(value instanceof NinePatchDrawable ? ScaleType.FIT_XY : ScaleType.CENTER_INSIDE);

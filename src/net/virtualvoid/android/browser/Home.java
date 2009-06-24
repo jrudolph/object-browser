@@ -52,7 +52,7 @@ public class Home {
     public ItemList getSystemDrawables(){
         return new ItemFactory.MappedArrayItemList<Field>("System icons",android.R.drawable.class.getFields()){
             @Override
-            protected Item map(final Field f) {
+            protected Item map(final Field f,int pos) {
                 try {
                     final int id = f.getInt(null);
                     final String name = f.getName();
@@ -81,7 +81,7 @@ public class Home {
             @Override
             public Item byPathSegment(String path) {
                 try {
-                    return map(android.R.drawable.class.getField(path));
+                    return map(android.R.drawable.class.getField(path),-1);
                 } catch (Exception e) {
                     return null;
                 }

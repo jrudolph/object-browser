@@ -49,10 +49,10 @@ public class ItemFactory {
         }
 
         protected abstract T getOriginal(int position);
-        protected abstract Item map(T object);
+        protected abstract Item map(T object,int i);
         @Override
         public Item get(int position) {
-            return map(getOriginal(position));
+            return map(getOriginal(position),position);
         }
         @Override
         public CharSequence getName() {
@@ -127,7 +127,7 @@ public class ItemFactory {
     private static ItemList fromArray(final String name,final Item...is){
         return new MappedArrayItemList<Item>(name,is){
             @Override
-            protected Item map(Item item) {
+            protected Item map(Item item,int pos) {
                 return item;
             }
             @Override
@@ -186,13 +186,13 @@ public class ItemFactory {
     private static ItemList materialize(final MetaItemList metaList,final Object o){
         return new MappedRAItemList<MetaItem>(metaList.getName(),metaList){
             @Override
-            protected Item map(MetaItem arg0) {
+            protected Item map(MetaItem arg0,int pos) {
                 return materialize(arg0, o);
             }
             @Override
             public Item byPathSegment(String path) {
                 MetaItem meta = metaList.byPathSegment(path);
-                return meta != null ? map(meta) : null;
+                return meta != null ? map(meta,-1) : null;
             }
         };
     }
@@ -313,7 +313,7 @@ public class ItemFactory {
             keys.add(o);
         return new MappedListItemList<Object>("Values",keys){
             @Override
-            protected Item map(final Object key) {
+            protected Item map(final Object key,int pos) {
                 return new Item(){
                     @Override
                     public Object get() {
@@ -338,10 +338,10 @@ public class ItemFactory {
             public Item byPathSegment(String str) {
                 Object key = map.get(str);
                 if (key != null)
-                    return map(key);
+                    return map(key,-1);
                 else {
                     for (Object k:keys){
-                        Item i = map(k);
+                        Item i = map(k,-1);
                         if (i.getPath().equals(str))
                             return i;
                     }
@@ -412,7 +412,7 @@ public class ItemFactory {
                 singleton("..","parent",dir.getParentFile())
                 ,new MappedArrayItemList<File>("Contents",dir.listFiles()){
                     @Override
-                    protected Item map(final File f) {
+                    protected Item map(final File f,int pos) {
                         return new Item(){
                             @Override
                             public Object get() {
@@ -435,7 +435,7 @@ public class ItemFactory {
                     @Override
                     public Item byPathSegment(String str) {
                         File f = new File(dir.getAbsolutePath()+File.separator+str);
-                        return f.exists() ? map(f) : null;
+                        return f.exists() ? map(f,-1) : null;
                     }
                 });
     }
@@ -449,7 +449,7 @@ public class ItemFactory {
                 return cursor.getString(0);
             }
             @Override
-            protected Item map(final String table) {
+            protected Item map(final String table,int pos) {
                 return new Item(){
                     @Override
                     public Object get() {
@@ -524,7 +524,7 @@ public class ItemFactory {
     private static MappedListItemList<PackageInfo> packagesFromPM(final PackageManager pm) {
         return new MappedListItemList<PackageInfo>("Installed Packages",pm.getInstalledPackages(0xffffffff)){
             @Override
-            protected Item map(final PackageInfo info) {
+            protected Item map(final PackageInfo info,int pos) {
                 return new Item(){
                     @Override
                     public Object get() {
@@ -549,8 +549,42 @@ public class ItemFactory {
                 try {
                     String packageName = path.replaceAll("\\#", ".");
                     PackageInfo pi = pm.getPackageInfo(packageName, 0xffffffff);
-                    return pi != null ? map(pi) : null;
+                    return pi != null ? map(pi,-1) : null;
                 } catch (NameNotFoundException e) {
+                    return null;
+                }
+            }
+        };
+    }
+    private static ItemList stackTraceOf(final Throwable t){
+        return new MappedArrayItemList<StackTraceElement>("Stacktrace",t.getStackTrace()){
+            @Override
+            protected Item map(final StackTraceElement arg0,final int pos) {
+                return new Item(){
+                    @Override
+                    public Object get() {
+                        return arg0;
+                    }
+                    @Override
+                    public CharSequence getName() {
+                        return arg0.getClassName()+"."+arg0.getMethodName();
+                    }
+                    @Override
+                    public String getPath() {
+                        return Integer.toString(pos);
+                    }
+                    @Override
+                    public Class<?> getReturnType() {
+                        return StackTraceElement.class;
+                    }
+                };
+            }
+            @Override
+            public Item byPathSegment(String path) {
+                try {
+                    int i = Integer.valueOf(path);
+                    return map(t.getStackTrace()[i],i);
+                } catch(NumberFormatException nfe){
                     return null;
                 }
             }
@@ -897,6 +931,8 @@ public class ItemFactory {
             add(res,tablesOfDb(((File) o).getPath()));
         else if (o instanceof Cursor)
             add(res,resultsOfQuery((Cursor) o));
+        else if (o instanceof Throwable)
+            add(res,stackTraceOf((Throwable) o));
 
         if (o instanceof ItemList)
             add(res,(ItemList) o);

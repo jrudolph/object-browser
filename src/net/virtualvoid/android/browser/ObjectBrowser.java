@@ -105,7 +105,7 @@ public class ObjectBrowser {
         } catch (Exception e) {
             // FAIL more noisily
             e.printStackTrace();
-            return getCurrent();
+            return switchTo(e,i.getPath(),pos);
         }
     }
 
