@@ -782,8 +782,7 @@ public class ItemFactory {
             return new MappedArray(Array.newInstance(originalClass(),0).getClass()){
                 @Override
                 protected Object mappedValueAt(int pos) {
-                    List<Object> list = res.get(values[pos]);
-                    return list.toArray((Object[])Array.newInstance(Reflection.boxed(MappedArray.this.originalClass()), list.size()));
+                    return res.get(values[pos]).toArray();
                 }
                 @Override
                 protected int numValues() {
