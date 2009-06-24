@@ -21,6 +21,7 @@ package net.virtualvoid.android.browser;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -119,7 +120,9 @@ public abstract class MetaItemFactory {
                     public Object get(Object parent){
                         try {
                             return m.invoke(parent);
-                        } catch (Exception e) {
+                        } catch(InvocationTargetException e){
+                            throw new RuntimeException(e.getCause());
+                        } catch(Exception e) {
                             throw new RuntimeException(e);
                         }
                     }
