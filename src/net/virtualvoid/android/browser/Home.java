@@ -94,6 +94,9 @@ public class Home {
     public Author getAuthor(){
         return new Author(this);
     }
+    public void getExceptionalCase(){
+        throw new RuntimeException("This is an exception from rule 23: Avoid exceptions.");
+    }
     private String[]linesOf(InputStream is) throws IOException{
         ArrayList<String> res = new ArrayList<String>();
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
