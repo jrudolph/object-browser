@@ -47,6 +47,10 @@ public class ObjectBrowser {
             this.object = object;
             this.path = path;
         }
+        @Override
+        public String toString() {
+            return path;
+        }
     }
     private static HistoryItem history(Object object,String path){
         return new HistoryItem(object,path);
