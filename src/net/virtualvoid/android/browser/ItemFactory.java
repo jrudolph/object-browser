@@ -590,13 +590,13 @@ public class ItemFactory {
             }
         };
     }
-    private static ItemList informationFor(Home home,final HistoryItem o){
-        List<Item> els = Arrays.asList(single("String representation","toString",o.toString())
-                     ,single("Class","class",o.getClass())
-                     ,single("Path","path",o.path));
+    private static ItemList informationFor(Home home,final HistoryItem item){
+        List<Item> els = Arrays.asList(single("String representation","toString",item.object.toString())
+                     ,single("Class","class",item.object.getClass())
+                     ,single("Path","path",item.path));
 
         if (Settings.showSelfFromPath.get())
-            els.add(single("Self by path","self",fromPath(home, o.path)));
+            els.add(single("Self by path","self",fromPath(home, item.path)));
 
         return fromArray("This",els.toArray(new Item[els.size()]));
     }
