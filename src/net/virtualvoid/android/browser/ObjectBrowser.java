@@ -22,7 +22,7 @@ package net.virtualvoid.android.browser;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import android.content.Context;
+import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
@@ -32,10 +32,10 @@ public class ObjectBrowser {
     LinkedList<HistoryItem> history = new LinkedList<HistoryItem>();
     ArrayList<Object> saved = new ArrayList<Object>();
     Home mycastle = new Home(this);
-    private Context ctx;
+    private Activity activity;
 
-    public ObjectBrowser(Context ctx) {
-        this.ctx = ctx;
+    public ObjectBrowser(Activity activity) {
+        this.activity = activity;
     }
 
     static class HistoryItem{
@@ -59,13 +59,13 @@ public class ObjectBrowser {
     private final static int MAX_HISTORY = 25;
 
     public Resources getResources(){
-        return ctx.getResources();
+        return activity.getResources();
     }
     public PackageManager getPackageManager(){
-        return ctx.getPackageManager();
+        return activity.getPackageManager();
     }
     public AssetManager getAssets(){
-        return ctx.getAssets();
+        return activity.getAssets();
     }
 
     Home getHome(){
